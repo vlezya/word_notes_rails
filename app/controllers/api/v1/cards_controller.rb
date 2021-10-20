@@ -1,4 +1,6 @@
 class Api::V1::CardsController < ApplicationController
+  include ErrorHandler
+  
   before_action :set_card, only: [:show, :update, :destroy]
   
   # GET /api/v1/cards
