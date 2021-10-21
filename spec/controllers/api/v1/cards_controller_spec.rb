@@ -29,6 +29,13 @@ RSpec.describe Api::V1::CardsController, type: :controller do
     end
     
     it 'routes PUT/PATCH api/v1/cards/:id to api/v1/cards#update' do
+      expect(put: 'api/v1/cards/55').to route_to(
+        controller: 'api/v1/cards',
+        action: 'update',
+        id: '55',
+        format: 'json'
+      )
+      
       expect(patch: 'api/v1/cards/55').to route_to(
         controller: 'api/v1/cards',
         action: 'update',
@@ -201,8 +208,6 @@ RSpec.describe Api::V1::CardsController, type: :controller do
       end
     end
   end
-    
-  
   
   describe 'PATCH #update' do
     let!(:card) { FactoryBot.create(:card) }
@@ -317,5 +322,4 @@ RSpec.describe Api::V1::CardsController, type: :controller do
       end
     end
   end
-  
 end
