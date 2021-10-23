@@ -35,6 +35,13 @@ RSpec.describe Api::V1::CardsController, type: :controller do
         id: '55',
         format: 'json'
       )
+      
+      expect(put: 'api/v1/cards/55').to route_to(
+        controller: 'api/v1/cards',
+        action: 'update',
+        id: '55',
+        format: 'json'
+      )
     end
     
     it ' routes DELETE api/v1/cards/:id to api/v1/cards#destroy' do
@@ -201,10 +208,73 @@ RSpec.describe Api::V1::CardsController, type: :controller do
       end
     end
   end
-    
-  
   
   describe 'PATCH #update' do
+    let!(:card) { FactoryBot.create(:card) }
+    context 'with valid params' do
+      before :each do
+        @cards_before_request = Card.count
+        @old_params = { word: card.word, translation: card.translation, example: card.example }
+        @new_params = FactoryBot.attributes_for(:card)
+        patch :update, params: { id: card.id, card: @new_params }
+      end
+  
+      it 'is expected to have :ok (200) HTTP response code' do
+        expect(response.status).to eq(200)
+      end
+      
+      it 'is expected to return application/json content type' do
+        expect(response.content_type).to eq('application/json; charset=utf-8')
+      end
+      
+      it 'is expected to update fields for Card' do
+        card.reload
+        @new_params.each do |key, value|
+          expect(card[key]).not_to eq(@old_params[key])
+          expect(card[key]).to eq(value)
+        end
+      end
+      
+      it "is expected to NOT create a new card" do
+        expect(Card.count).to eq(@cards_before_request)
+      end
+      
+      it 'is expected to include fields' do
+        card = JSON.parse(response.body)['card']
+        expect(card.key?('id')).to eq(true)
+        expect(card.key?('word')).to eq(true)
+        expect(card.key?('translation')).to eq(true)
+        expect(card.key?('example')).to eq(true)
+      end
+      
+      it 'is expected to NOT include fields' do
+        card = JSON.parse(response.body)['card']
+        expect(card.key?('created_at')).to eq(false)
+        expect(card.key?('updated_at')).to eq(false)
+      end
+    end
+    
+    context 'card not found' do
+      before :each do
+        patch :update, params: { id: -1 }
+      end
+      
+      it 'is expected to have :not_found (404) HTTP response code' do
+        expect(response.status).to eq(404)
+      end
+      
+      it 'is expected to return application/json content type' do
+        expect(response.content_type).to eq('application/json; charset=utf-8')
+      end
+      
+      it 'is expected to return errors' do
+        json_response = JSON.parse(response.body)
+        expect(json_response.key?('errors')).to eq(true)
+      end
+    end
+  end
+  
+  describe 'PUT #update' do
     let!(:card) { FactoryBot.create(:card) }
     context 'with valid params' do
       before :each do
