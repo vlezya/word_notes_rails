@@ -21,4 +21,10 @@ class Api::V1::SessionsController < ApplicationController
   # DELETE /api/v1/sessions/:id
   def destroy
   end
+  
+  private
+  
+  def user_params
+    params.require(:user).permit(:email, :password, :password_confirmation)
+  end
 end
