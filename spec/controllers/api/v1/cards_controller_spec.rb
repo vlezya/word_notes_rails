@@ -211,6 +211,7 @@ RSpec.describe Api::V1::CardsController, type: :controller do
   
   describe 'PATCH #update' do
     let!(:card) { FactoryBot.create(:card) }
+    
     context 'with valid params' do
       before :each do
         @cards_before_request = Card.count
@@ -276,6 +277,7 @@ RSpec.describe Api::V1::CardsController, type: :controller do
   
   describe 'PUT #update' do
     let!(:card) { FactoryBot.create(:card) }
+    
     context 'with valid params' do
       before :each do
         @cards_before_request = Card.count
@@ -341,6 +343,7 @@ RSpec.describe Api::V1::CardsController, type: :controller do
   
   describe 'DELETE #destroy' do
     let!(:card) { FactoryBot.create(:card) }
+    
     context 'with valid params' do
       before :each do
         @cards_before_request = Card.count
@@ -387,5 +390,4 @@ RSpec.describe Api::V1::CardsController, type: :controller do
       end
     end
   end
-  
 end

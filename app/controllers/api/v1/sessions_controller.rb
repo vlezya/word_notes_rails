@@ -1,20 +1,24 @@
 class Api::V1::SessionsController < ApplicationController
   
+  # POST /api/v1/sessions
   def create
-    user = User.find_by(email: params[:session][:email])
-    if user && user.authenticate(params[:session][:password])
-      log_in(user)
-      render json: { status: created }
+    # 1. params[:user] -> move to strong parameters (for User)
+    # 2. Generate Session model (token:string, user_id:bigint)
+    # 3. On Session model creation token should be set to a random unique value
+    # 4. `token` field should not be changed on session#update
+    # 5. Cover Session model with tests, including associations
+    
+    user = User.find_by!(email: params[:user][:email])
+    
+    if user.authenticate(params[:user][:password])
+      # Create Session object, associate it with User, serialize and return both User and Session objects back
+      render json: { success: true }, status: :created
     else
-      render json: { status: 401 }
+      render json: { success: false }, status: :unauthorized
     end
   end
   
+  # DELETE /api/v1/sessions/:id
   def destroy
-    
-  end
-  
-  def log_in(user)
-    session[:user_id] = user.id
   end
 end
