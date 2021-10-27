@@ -1,3 +1,6 @@
 class Card < ApplicationRecord
-  validates_presence_of :word, :translation, :example
+  # Field validations
+  validates :word, presence: true
+  validates :translation, presence: true
+  validates :example, presence: true
 end

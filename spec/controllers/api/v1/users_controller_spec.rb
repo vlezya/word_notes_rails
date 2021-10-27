@@ -9,7 +9,6 @@ RSpec.describe Api::V1::UsersController, type: :controller do
         action: 'create',
         format: 'json'
       )
-      
     end
   end
   
@@ -18,7 +17,8 @@ RSpec.describe Api::V1::UsersController, type: :controller do
       before do
         @users_before_request = User.count
         @user_params = FactoryBot.attributes_for(:user)
-        post :create, params: { user: @user_params }
+        @session_params = FactoryBot.attributes_for(:session)
+        post :create, params: { user: @user_params, session: @session_params }
       end
       
       it 'is expected to have :created (201) HTTP response status code' do
@@ -29,25 +29,41 @@ RSpec.describe Api::V1::UsersController, type: :controller do
         expect(response.content_type).to eq('application/json; charset=utf-8')
       end
       
-      it 'is expected to crete a new User' do
+      it 'is expected to create a new User' do
         expect(User.count).to eq(@users_before_request + 1)
       end
       
-      it 'is expected to include fields' do
+      it 'is expected to include User fields' do
         user = JSON.parse(response.body)['user']
         expect(user.key?('id')).to eq(true)
         expect(user.key?('email')).to eq(true)
       end
       
-      it 'is expected to NOT include fields' do
+      it 'is expected to NOT include User fields' do
         user = JSON.parse(response.body)['user']
+        expect(user.key?('password')).to eq(false)
+        expect(user.key?('password_confirmation')).to eq(false)
         expect(user.key?('password_digest')).to eq(false)
         expect(user.key?('created_at')).to eq(false)
         expect(user.key?('updated_at')).to eq(false)
       end
+      
+      it 'is expected to include Session fields' do
+        session = JSON.parse(response.body)['session']
+        expect(session.key?('id')).to eq(true)
+        expect(session.key?('token')).to eq(true)
+        expect(session.key?('user_id')).to eq(true)
+      end
+      
+      it 'is expected to NOT include Session fields' do
+        user = JSON.parse(response.body)['session']
+        expect(session.key?('created_at')).to eq(false)
+        expect(session.key?('updated_at')).to eq(false)
+        expect(session.key?('operational_system')).to eq(false)
+      end
     end
-      
-      
-  
+    
+    context 'with INVALID params' do
+    end
   end
 end
