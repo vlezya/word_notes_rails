@@ -1,15 +1,19 @@
 class Api::V1::CardsController < ApplicationController
+  include ErrorHandler
+  
   before_action :set_card, only: [:show, :update, :destroy]
   
   # GET /api/v1/cards
   def index
     @cards = Card.all
-    cards_json = ActiveModel::Serializer::CollectionSerializer.new(@cards,
-      each_serializer: CardSerializer)
+    cards_json = ActiveModel::Serializer::CollectionSerializer.new(
+      @cards,
+      each_serializer: CardSerializer
+    )
     render json: { cards: cards_json }, status: :ok
   end
   
-  # GET /api/v1/cards/1
+  # GET /api/v1/cards/:id
   def show
     card_json = CardSerializer.new(@card).as_json
     render json: { card: card_json }, status: :ok
@@ -27,7 +31,7 @@ class Api::V1::CardsController < ApplicationController
     end
   end
   
-  # PATCH/PUT  /api/v1/cards/1
+  # PATCH/PUT  /api/v1/cards/:id
   def update
     if @card.update(card_params)
       card_json = CardSerializer.new(@card).as_json
