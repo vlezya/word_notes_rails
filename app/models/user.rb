@@ -5,6 +5,8 @@ class User < ApplicationRecord
   EMAIL_REGEX = /\A[\w+\-.]+@[a-z\d\-.]+\.[a-z]+\z/i
   
   # Associations
+  has_many :sessions, dependent: :destroy
+  
   # Associations validations
   
   # Field validations
