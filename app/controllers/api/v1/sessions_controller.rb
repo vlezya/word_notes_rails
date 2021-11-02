@@ -9,7 +9,8 @@ class Api::V1::SessionsController < ApplicationController
       return
     end
     
-    session = Session.new(user: user)
+    session = Session.new(session_params)
+    session.user = user
     if session.save
       session_json = SessionSerializer.new(session).as_json
       user_json = UserSerializer.new(user).as_json
@@ -27,6 +28,10 @@ class Api::V1::SessionsController < ApplicationController
   end
   
   private
+    def session_params
+      params.require(:session).permit(:operational_system)
+    end
+    
     def user_params
       params.require(:user).permit(:email, :password)
     end
