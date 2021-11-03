@@ -26,7 +26,7 @@ class Api::V1::CardsController < ApplicationController
       card_json = CardSerializer.new(@card).as_json
       render json: { card: card_json }, status: :created
     else
-      render json: @card.errors, status: :unprocessable_entity
+      render json: { errors: @card.errors }, status: :unprocessable_entity
     end
   end
   
@@ -36,15 +36,14 @@ class Api::V1::CardsController < ApplicationController
       card_json = CardSerializer.new(@card).as_json
       render json: { card: card_json }, status: :ok
     else
-      render json: @card.errors, status: :unprocessable_entity
+      render json: { errors: @card.errors }, status: :unprocessable_entity
     end
   end
   
   # DELETE /api/v1/cards/1
   def destroy
     @card.destroy
-    card_json = CardSerializer.new(@card).as_json
-    render json: { card: card_json }, status: :ok
+    render json: { success: true }, status: :ok
   end
   
   private

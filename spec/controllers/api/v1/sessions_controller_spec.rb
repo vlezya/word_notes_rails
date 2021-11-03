@@ -135,8 +135,12 @@ RSpec.describe Api::V1::SessionsController, type: :controller do
         post :create, params: { user: user_params, session: session_params }
       end
       
-      it 'is expected to have :not_found (404) HTTP response code' do
-        expect(response.status).to eq(404)
+      it 'is expected to have :unauthorized (401) HTTP response code' do
+        expect(response.status).to eq(401)
+      end
+      
+      it 'expected return application/json content type' do
+        expect(response.content_type).to eq('application/json; charset=utf-8')
       end
       
       it 'is expected NOT to create a new Session' do
@@ -147,6 +151,36 @@ RSpec.describe Api::V1::SessionsController, type: :controller do
         json_response = JSON.parse(response.body)
         expect(json_response.key?('errors')).to eq(true)
       end
+    end
+  end
+  
+  describe 'DELETE #destroy' do
+    context 'with valid params' do
+      before(:each) do
+        @sessions_before_request = Session.count
+        user = FactoryBot.create(:user)
+        session = FactoryBot.create(:session, token: 'fdsfsdfsd23423$dfds', user: user)
+        
+        delete :destroy, params: { token: session.token }
+      end
+      
+      it 'is expected to have :destroy (200) HTTP response code' do
+        expect(response.status).to eq(200)
+      end
+      
+      it 'expected return application/json content type' do
+        expect(response.content_type).to eq('application/json; charset=utf-8')
+      end
+      
+      it 'is expected to delete a Session' do
+        expect(Session.count).to eq(@sessions_before_request)
+      end
+      
+      it 'is expected to return errors' do
+        json_response = JSON.parse(response.body)
+        expect(json_response.key?('errors')).to eq(true)
+      end
+      
     end
   end
 end
