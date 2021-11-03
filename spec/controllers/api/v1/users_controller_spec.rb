@@ -64,6 +64,7 @@ RSpec.describe Api::V1::UsersController, type: :controller do
     end
     
     context 'with INVALID params' do
+      
     end
   end
 end
