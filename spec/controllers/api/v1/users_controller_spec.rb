@@ -64,7 +64,34 @@ RSpec.describe Api::V1::UsersController, type: :controller do
     end
     
     context 'with INVALID params' do
+      before do
+        @users_before_request = User.count
+        @sessions_before_request = Session.count
+        @user_params = FactoryBot.attributes_for(:user)
+        @session_params = FactoryBot.attributes_for(:session, operational_system: 'windows')
+        post :create, params: { user: @user_params, session: @session_params }
+      end
       
+      it 'is expected to have :unprocessable_entity (422) HTTP response status code' do
+        expect(response.status).to eq(422)
+      end
+      
+      it 'is expected return application/json content type' do
+        expect(response.content_type).to eq('application/json; charset=utf-8')
+      end
+      
+      it 'is expected to NOT create a new Session' do
+        expect(Session.count).to eq(@sessions_before_request)
+      end
+      
+      it 'is expected to NOT create a new User' do
+        expect(User.count).to eq(@users_before_request)
+      end
+      
+      it 'is expected to return errors' do
+        json_response = JSON.parse(response.body)
+        expect(json_response.key?('errors')).to eq(true)
+      end
     end
   end
 end

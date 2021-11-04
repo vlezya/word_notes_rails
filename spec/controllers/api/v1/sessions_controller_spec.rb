@@ -120,12 +120,12 @@ RSpec.describe Api::V1::SessionsController, type: :controller do
     
     context 'with INVALID email' do
       before :each do
-        @user1 = User.create
+        user = FactoryBot.create(:user)
         @users_before_request = User.count
         @sessions_before_request = Session.count
         
         user_params = {
-          email: @user1.email,
+          email: user.email,
           password: @password
         }
         session_params = {
@@ -157,10 +157,9 @@ RSpec.describe Api::V1::SessionsController, type: :controller do
   describe 'DELETE #destroy' do
     context 'with valid params' do
       before(:each) do
-        @sessions_before_request = Session.count
         user = FactoryBot.create(:user)
-        session = FactoryBot.create(:session, token: 'fdsfsdfsd23423$dfds', user: user)
-        
+        session = FactoryBot.create(:session, user: user)
+        @sessions_before_request = Session.count
         delete :destroy, params: { token: session.token }
       end
       
@@ -173,14 +172,8 @@ RSpec.describe Api::V1::SessionsController, type: :controller do
       end
       
       it 'is expected to delete a Session' do
-        expect(Session.count).to eq(@sessions_before_request)
+        expect(Session.count).to eq(@sessions_before_request - 1)
       end
-      
-      it 'is expected to return errors' do
-        json_response = JSON.parse(response.body)
-        expect(json_response.key?('errors')).to eq(true)
-      end
-      
     end
   end
 end

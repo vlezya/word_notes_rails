@@ -12,6 +12,9 @@
 
 ActiveRecord::Schema.define(version: 2021_10_27_161541) do
 
+  # These are extensions that must be enabled in order to support this database
+  enable_extension "plpgsql"
+
   create_table "cards", force: :cascade do |t|
     t.string "word", null: false
     t.string "translation", null: false
@@ -22,7 +25,7 @@ ActiveRecord::Schema.define(version: 2021_10_27_161541) do
 
   create_table "sessions", force: :cascade do |t|
     t.string "token", null: false
-    t.integer "user_id", null: false
+    t.bigint "user_id", null: false
     t.datetime "created_at", precision: 6, null: false
     t.datetime "updated_at", precision: 6, null: false
     t.string "operational_system", null: false
