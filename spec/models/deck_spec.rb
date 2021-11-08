@@ -1,7 +1,7 @@
 require 'rails_helper'
 
 RSpec.describe Deck, type: :model do
-  before(:all) do
+  before :all do
     @deck = FactoryBot.create(:deck)
   end
   
@@ -17,7 +17,6 @@ RSpec.describe Deck, type: :model do
     context 'associations' do
     end
     context 'fields' do
-      subject { FactoryBot.build(:deck) }
       it { is_expected.to validate_presence_of(:title) }
     end
   end
@@ -27,5 +26,4 @@ RSpec.describe Deck, type: :model do
   
   context 'callbacks' do
   end
-
 end
