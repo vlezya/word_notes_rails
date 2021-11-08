@@ -14,7 +14,6 @@ RSpec.describe Card, type: :model do
     context 'associations' do
     end
     context 'fields' do
-      subject { FactoryBot.build(:card) }
       it { is_expected.to validate_presence_of(:word) }
       it { is_expected.to validate_presence_of(:translation) }
       it { is_expected.to validate_presence_of(:example) }
