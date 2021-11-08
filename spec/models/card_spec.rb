@@ -7,6 +7,7 @@ RSpec.describe Card, type: :model do
   end
   
   context 'associations' do
+    it { is_expected.to have_and_belong_to_many(:decks) }
   end
   
   context 'validations' do
