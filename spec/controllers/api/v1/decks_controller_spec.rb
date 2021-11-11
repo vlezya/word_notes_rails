@@ -58,7 +58,12 @@ RSpec.describe Api::V1::DecksController, type: :controller do
     context 'with valid params' do
       before :all do
         Deck.destroy_all
-        @deck = FactoryBot.create_list(:deck, 3)
+        @card1 = FactoryBot.create(:card)
+        @card2 = FactoryBot.create(:card)
+        @card3 = FactoryBot.create(:card)
+        @deck1 = FactoryBot.create(:deck)
+        @deck2 = FactoryBot.create(:deck, cards: [@card1, @card2])
+        @deck3 = FactoryBot.create(:deck, cards: [@card3])
       end
       
       before :each do
@@ -77,15 +82,22 @@ RSpec.describe Api::V1::DecksController, type: :controller do
         json_response = JSON.parse(response.body)
         expect(json_response.key?('decks')).to eq(true)
         
-        decks = json_response['decks']
-        expect(decks.count).to eq(3)
+        deck = json_response['decks']
+        expect(deck.count).to eq(3)
       end
       
-      it 'is expected to includes fields' do
+      it 'is expected to includes fields Deck' do
         decks = JSON.parse(response.body)['decks']
         decks.each do |deck|
           expect(deck.key?('id')).to eq(true)
           expect(deck.key?('title')).to eq(true)
+          expect(deck.key?('cards')).to eq(true)
+          deck['cards'].each do |card|
+            expect(card.key?('id')).to eq(true)
+            expect(card.key?('word')).to eq(true)
+            expect(card.key?('translation')).to eq(true)
+            expect(card.key?('example')).to eq(true)
+          end
         end
       end
       
@@ -94,7 +106,27 @@ RSpec.describe Api::V1::DecksController, type: :controller do
         decks.each do |deck|
           expect(deck.key?('created_at')).to eq(false)
           expect(deck.key?('updated_at')).to eq(false)
+          deck['cards'].each do |card|
+            expect(deck.key?('created_at')).to eq(false)
+            expect(deck.key?('updated_at')).to eq(false)
+          end
         end
+      end
+      
+      it "is expected to return a correct Deck with Cards" do
+        decks = JSON.parse(response.body)['decks']
+        
+        json_deck1 = decks.find { |deck| deck['id'] == @deck1.id }
+        expect(json_deck1).not_to eq(nil)
+        expect(json_deck1['cards'].count).to eq(0)
+        
+        json_deck2 = decks.find { |deck| deck['id'] == @deck2.id }
+        expect(json_deck2).not_to eq(nil)
+        expect(json_deck2['cards'].count).to eq(2)
+        
+        json_deck3 = decks.find { |deck| deck['id'] == @deck3.id }
+        expect(json_deck3).not_to eq(nil)
+        expect(json_deck3['cards'].count).to eq(1)
       end
     end
   end
@@ -103,11 +135,12 @@ RSpec.describe Api::V1::DecksController, type: :controller do
     context 'with valid params' do
       before :all do
         Deck.destroy_all
-        @deck = FactoryBot.create(:deck)
+        @cards = FactoryBot.create_list(:card, 3)
+        @deck = FactoryBot.create(:deck, cards: @cards)
       end
       
       before :each do
-        get :show, params: { id: @deck['id'] }
+        get :show, params: { id: @deck.id }
       end
       
       it 'is expected to have :ok (200) HTTP response code' do
@@ -123,22 +156,33 @@ RSpec.describe Api::V1::DecksController, type: :controller do
         expect(json_response.key?('deck')).to eq(true)
         
         deck = json_response['deck']
-        expect(deck).not_to eq(nil)
-        
         deck_id = deck['id']
         expect(deck_id).to eq(@deck.id)
+        expect(deck).not_to eq(nil)
+        expect(deck['cards'].count).to eq(3)
       end
       
       it 'is expected to include fields' do
         deck = JSON.parse(response.body)['deck']
         expect(deck.key?('id')).to eq(true)
         expect(deck.key?('title')).to eq(true)
+        expect(deck.key?('cards')).to eq(true)
+        deck['cards'].each do |card|
+          expect(card.key?('id')).to eq(true)
+          expect(card.key?('word')).to eq(true)
+          expect(card.key?('translation')).to eq(true)
+          expect(card.key?('example')).to eq(true)
+        end
       end
       
       it 'is expected to NOT include fields' do
         deck = JSON.parse(response.body)['deck']
         expect(deck.key?('created_at')).to eq(false)
         expect(deck.key?('updated_at')).to eq(false)
+        deck['cards'].each do |card|
+          expect(deck.key?('created_at')).to eq(false)
+          expect(deck.key?('updated_at')).to eq(false)
+        end
       end
     end
     
@@ -161,7 +205,7 @@ RSpec.describe Api::V1::DecksController, type: :controller do
       end
     end
   end
-      
+  
   describe 'POST #create' do
     context 'with valid params' do
       before :each do
@@ -204,12 +248,12 @@ RSpec.describe Api::V1::DecksController, type: :controller do
   end
   
   describe 'PATCH #update' do
-    let!(:deck){ FactoryBot.create(:deck) }
+    let!(:deck) { FactoryBot.create(:deck) }
     
     context 'with valid params' do
       before :each do
         @decks_before_request = Deck.count
-        @old_params = { title: 'My Deck'}
+        @old_title = deck.reload.title
         @deck_params = FactoryBot.attributes_for(:deck)
         patch :update, params: { id: deck.id, deck: @deck_params }
       end
@@ -225,12 +269,12 @@ RSpec.describe Api::V1::DecksController, type: :controller do
       it 'is expected to update fields for Deck' do
         deck.reload
         @deck_params.each do |key, value|
-          expect(deck[key]).not_to eq(@old_params[key])
+          expect(deck[key]).not_to eq(@old_title)
           expect(deck[key]).to eq(value)
         end
       end
       
-      it 'is expected to NOT created a new deck' do
+      it 'is expected to NOT create a new Deck' do
         expect(Deck.count).to eq(@decks_before_request)
       end
       
@@ -247,7 +291,7 @@ RSpec.describe Api::V1::DecksController, type: :controller do
       end
     end
     
-    context 'deck not found' do
+    context 'Deck NOT found' do
       before :each do
         patch :update, params: { id: -1 }
       end
@@ -268,12 +312,12 @@ RSpec.describe Api::V1::DecksController, type: :controller do
   end
   
   describe 'PUT #update' do
-    let!(:deck){ FactoryBot.create(:deck) }
+    let!(:deck) { FactoryBot.create(:deck) }
     
     context 'with valid params' do
       before :each do
         @decks_before_request = Deck.count
-        @old_params = { title: 'My Deck'}
+        @old_title = deck.reload.title
         @deck_params = FactoryBot.attributes_for(:deck)
         patch :update, params: { id: deck.id, deck: @deck_params }
       end
@@ -289,7 +333,7 @@ RSpec.describe Api::V1::DecksController, type: :controller do
       it 'is expected to update fields for Deck' do
         deck.reload
         @deck_params.each do |key, value|
-          expect(deck[key]).not_to eq(@old_params[key])
+          expect(deck[key]).not_to eq(@old_title)
           expect(deck[key]).to eq(value)
         end
       end

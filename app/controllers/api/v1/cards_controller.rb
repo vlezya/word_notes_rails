@@ -42,8 +42,9 @@ class Api::V1::CardsController < ApplicationController
   
   # DELETE /api/v1/cards/1
   def destroy
+    card_json = CardSerializer.new(@card).as_json
     @card.destroy
-    render json: { success: true }, status: :ok
+    render json: { card: card_json }, status: :ok
   end
   
   private

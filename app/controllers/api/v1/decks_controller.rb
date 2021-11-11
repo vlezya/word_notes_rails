@@ -1,6 +1,7 @@
 class Api::V1::DecksController < ApplicationController
   before_action :set_deck, only: [:show, :update, :destroy]
-  # GET /api/v1/deck
+  
+  # GET /api/v1/decks
   def index
     @decks = Deck.all
     decks_json = ActiveModel::Serializer::CollectionSerializer.new(@decks, each_serializer: DeckSerializer)
@@ -36,10 +37,11 @@ class Api::V1::DecksController < ApplicationController
     end
   end
   
-  # DELETE /api/v1/deck/1
+  # DELETE /api/v1/decks/1
   def destroy
+    deck_json = DeckSerializer.new(@deck).as_json
     @deck.destroy
-    render json: { success: true }, status: :ok
+    render json: { deck: deck_json }, status: :ok
   end
   
   private
@@ -48,6 +50,6 @@ class Api::V1::DecksController < ApplicationController
     end
     
     def deck_params
-      params.require(:deck).permit(:title)
+      params.require(:deck).permit(:title, card_ids: [])
     end
 end
