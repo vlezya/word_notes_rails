@@ -108,7 +108,7 @@ RSpec.describe Api::V1::CardsController, type: :controller do
         @card = FactoryBot.create(:card)
       end
       
-      before do
+      before :each do
         get :show, params: { id: @card['id'] }
       end
       

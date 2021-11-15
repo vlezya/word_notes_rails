@@ -5,8 +5,7 @@ class CreateCardsDecks < ActiveRecord::Migration[6.1]
       t.bigint :deck_id, null: false
       t.timestamps
       
-      t.index :card_id
-      t.index :deck_id
+      t.index [:card_id, :deck_id], unique: true
     end
   end
 end

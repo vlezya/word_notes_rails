@@ -28,8 +28,7 @@ ActiveRecord::Schema.define(version: 2021_11_05_110735) do
     t.bigint "deck_id", null: false
     t.datetime "created_at", precision: 6, null: false
     t.datetime "updated_at", precision: 6, null: false
-    t.index ["card_id"], name: "index_cards_decks_on_card_id"
-    t.index ["deck_id"], name: "index_cards_decks_on_deck_id"
+    t.index ["card_id", "deck_id"], name: "index_cards_decks_on_card_id_and_deck_id", unique: true
   end
 
   create_table "decks", force: :cascade do |t|

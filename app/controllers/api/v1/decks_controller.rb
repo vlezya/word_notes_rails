@@ -1,17 +1,18 @@
 class Api::V1::DecksController < ApplicationController
+  before_action :set_deck, only: [:show, :update, :destroy]
   
   # GET /api/v1/decks
   def index
     @decks = Deck.all
-    decks_json = ActiveModel::Serializer::CollectionSerializer.new(@decks,
-       each_serializer: DeckSerializer)
+    decks_json = ActiveModel::Serializer::CollectionSerializer.new(@decks, each_serializer: DeckSerializer)
        
     render json: { decks: decks_json }, status: :ok
   end
   
+  # GET /api/v1/decks/:id
   def show
-    decks_json = DeckSerializer.new(@deck).as_json
-    render json: { deck: decks_json }, status: :ok
+    deck_json = DeckSerializer.new(@deck).as_json
+    render json: { deck: deck_json }, status: :ok
   end
   
   # POST /api/v1/decks
@@ -19,8 +20,8 @@ class Api::V1::DecksController < ApplicationController
     @deck = Deck.new(deck_params)
     
     if @deck.save
-      decks_json = DeckSerializer.new(@deck).as_json
-      render json: { deck: decks_json }, status: :created
+      deck_json = DeckSerializer.new(@deck).as_json
+      render json: { deck: deck_json }, status: :created
     else
       render json: { errors: @deck.errors }, status: :unprocessable_entity
     end
@@ -29,8 +30,8 @@ class Api::V1::DecksController < ApplicationController
   # PATCH/PUT  /api/v1/decks/:id
   def update
     if @deck.update(deck_params)
-      decks_json = DeckSerializer.new(@deck).as_json
-      render json: { deck: decks_json }, status: :ok
+      deck_json = DeckSerializer.new(@deck).as_json
+      render json: { deck: deck_json }, status: :ok
     else
       render json: { errors: @deck.errors }, status: :unprocessable_entity
     end
@@ -38,18 +39,17 @@ class Api::V1::DecksController < ApplicationController
   
   # DELETE /api/v1/decks/1
   def destroy
+    deck_json = DeckSerializer.new(@deck).as_json
     @deck.destroy
-    render json: { success: true }, status: :ok
+    render json: { deck: deck_json }, status: :ok
   end
   
   private
-    # Use callbacks to share common setup or constraints between actions.
     def set_deck
       @deck = Deck.find(params[:id])
     end
     
-    # Only allow a list of trusted parameters through.
     def deck_params
-      params.require(:deck).permit(:title)
+      params.require(:deck).permit(:title, card_ids: [])
     end
 end
