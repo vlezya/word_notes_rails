@@ -1,14 +1,10 @@
 class Api::V1::CardsController < ApplicationController
-  
   before_action :set_card, only: [:show, :update, :destroy]
   
   # GET /api/v1/cards
   def index
-    @cards = Card.all
-    cards_json = ActiveModel::Serializer::CollectionSerializer.new(
-      @cards,
-      each_serializer: CardSerializer
-    )
+    cards = Card.all
+    cards_json = ActiveModel::Serializer::CollectionSerializer.new(cards, each_serializer: CardSerializer)
     render json: { cards: cards_json }, status: :ok
   end
   
@@ -20,13 +16,14 @@ class Api::V1::CardsController < ApplicationController
   
   # POST /api/v1/cards
   def create
-    @card = Card.new(card_params)
+    card = Card.new(card_params)
+    card.user = current_user
     
-    if @card.save
-      card_json = CardSerializer.new(@card).as_json
+    if card.save
+      card_json = CardSerializer.new(card).as_json
       render json: { card: card_json }, status: :created
     else
-      render json: { errors: @card.errors }, status: :unprocessable_entity
+      render json: { errors: card.errors }, status: :unprocessable_entity
     end
   end
   
@@ -43,8 +40,11 @@ class Api::V1::CardsController < ApplicationController
   # DELETE /api/v1/cards/1
   def destroy
     card_json = CardSerializer.new(@card).as_json
-    @card.destroy
-    render json: { card: card_json }, status: :ok
+    if @card.destroy
+      render json: { card: card_json }, status: :ok
+    else
+      render json: { errors: @card.errors }, status: :unprocessable_entity
+    end
   end
   
   private
