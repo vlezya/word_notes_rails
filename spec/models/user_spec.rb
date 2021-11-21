@@ -7,6 +7,8 @@ RSpec.describe User, type: :model do
   end
   
   context 'associations' do
+    it { is_expected.to have_many(:cards).dependent(:destroy) }
+    it { is_expected.to have_many(:decks).dependent(:destroy) }
     it { is_expected.to have_many(:sessions).dependent(:destroy) }
   end
   

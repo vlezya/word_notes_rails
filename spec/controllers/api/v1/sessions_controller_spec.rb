@@ -23,6 +23,7 @@ RSpec.describe Api::V1::SessionsController, type: :controller do
   before :all do
     @password = 'TestPass$1234'
     @user = FactoryBot.create(:user, password: @password, password_confirmation: @password)
+    @session = FactoryBot.create(:session, user: @user)
   end
   
   describe 'POST #create' do
@@ -160,6 +161,8 @@ RSpec.describe Api::V1::SessionsController, type: :controller do
         user = FactoryBot.create(:user)
         session = FactoryBot.create(:session, user: user)
         @sessions_before_request = Session.count
+        
+        request.headers['X-Session-Token'] = @session.token
         delete :destroy, params: { token: session.token }
       end
       

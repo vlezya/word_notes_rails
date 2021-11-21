@@ -1,7 +1,6 @@
 require 'rails_helper'
 
 RSpec.describe Api::V1::DecksController, type: :controller do
-  
   describe 'routing' do
     it 'routes GET /api/v1/decks to api/v1/decks#index' do
       expect(get: '/api/v1/decks').to route_to(
@@ -54,19 +53,25 @@ RSpec.describe Api::V1::DecksController, type: :controller do
     end
   end
   
+  before :all do
+    @user = FactoryBot.create(:user)
+    @session = FactoryBot.create(:session, user: @user)
+  end
+  
   describe 'GET #index' do
     context 'with valid params' do
       before :all do
         Deck.destroy_all
-        @card1 = FactoryBot.create(:card)
-        @card2 = FactoryBot.create(:card)
-        @card3 = FactoryBot.create(:card)
-        @deck1 = FactoryBot.create(:deck)
-        @deck2 = FactoryBot.create(:deck, cards: [@card1, @card2])
-        @deck3 = FactoryBot.create(:deck, cards: [@card3])
+        @card1 = FactoryBot.create(:card, user: @user)
+        @card2 = FactoryBot.create(:card, user: @user)
+        @card3 = FactoryBot.create(:card, user: @user)
+        @deck1 = FactoryBot.create(:deck, user: @user)
+        @deck2 = FactoryBot.create(:deck, cards: [@card1, @card2], user: @user)
+        @deck3 = FactoryBot.create(:deck, cards: [@card3], user: @user)
       end
       
       before :each do
+        request.headers['X-Session-Token'] = @session.token
         get :index
       end
       
@@ -113,7 +118,7 @@ RSpec.describe Api::V1::DecksController, type: :controller do
         end
       end
       
-      it "is expected to return a correct Deck with Cards" do
+      it 'is expected to return a correct Deck with Cards' do
         decks = JSON.parse(response.body)['decks']
         
         json_deck1 = decks.find { |deck| deck['id'] == @deck1.id }
@@ -135,11 +140,12 @@ RSpec.describe Api::V1::DecksController, type: :controller do
     context 'with valid params' do
       before :all do
         Deck.destroy_all
-        @cards = FactoryBot.create_list(:card, 3)
-        @deck = FactoryBot.create(:deck, cards: @cards)
+        @cards = FactoryBot.create_list(:card, 3, user: @user)
+        @deck = FactoryBot.create(:deck, cards: @cards, user: @user)
       end
       
       before :each do
+        request.headers['X-Session-Token'] = @session.token
         get :show, params: { id: @deck.id }
       end
       
@@ -188,6 +194,7 @@ RSpec.describe Api::V1::DecksController, type: :controller do
     
     context 'NOT found' do
       before :each do
+        request.headers['X-Session-Token'] = @session.token
         get :show, params: { id: -1 }
       end
       
@@ -211,6 +218,8 @@ RSpec.describe Api::V1::DecksController, type: :controller do
       before :each do
         @decks_before_request = Deck.count
         @deck_params = FactoryBot.attributes_for(:deck)
+        
+        request.headers['X-Session-Token'] = @session.token
         post :create, params: { deck: @deck_params }
       end
       
@@ -228,9 +237,7 @@ RSpec.describe Api::V1::DecksController, type: :controller do
       
       it 'is expected to set fields for Deck' do
         deck = Deck.order(id: :desc).first
-        @deck_params.each do |key, value|
-          expect(deck[key]).to eq(value)
-        end
+        expect(@deck_params[:title]).to eq(deck[:title])
       end
       
       it 'is expected to include fields' do
@@ -248,13 +255,15 @@ RSpec.describe Api::V1::DecksController, type: :controller do
   end
   
   describe 'PATCH #update' do
-    let!(:deck) { FactoryBot.create(:deck) }
+    let!(:deck) { FactoryBot.create(:deck, user: @user) }
     
     context 'with valid params' do
       before :each do
         @decks_before_request = Deck.count
         @old_title = deck.reload.title
         @deck_params = FactoryBot.attributes_for(:deck)
+        
+        request.headers['X-Session-Token'] = @session.token
         patch :update, params: { id: deck.id, deck: @deck_params }
       end
       
@@ -268,10 +277,8 @@ RSpec.describe Api::V1::DecksController, type: :controller do
       
       it 'is expected to update fields for Deck' do
         deck.reload
-        @deck_params.each do |key, value|
-          expect(deck[key]).not_to eq(@old_title)
-          expect(deck[key]).to eq(value)
-        end
+        expect(@deck_params[:title]).not_to eq(@old_title)
+        expect(@deck_params[:title]).to eq(deck[:title])
       end
       
       it 'is expected to NOT create a new Deck' do
@@ -291,8 +298,9 @@ RSpec.describe Api::V1::DecksController, type: :controller do
       end
     end
     
-    context 'Deck NOT found' do
+    context 'NOT found' do
       before :each do
+        request.headers['X-Session-Token'] = @session.token
         patch :update, params: { id: -1 }
       end
       
@@ -312,13 +320,15 @@ RSpec.describe Api::V1::DecksController, type: :controller do
   end
   
   describe 'PUT #update' do
-    let!(:deck) { FactoryBot.create(:deck) }
+    let!(:deck) { FactoryBot.create(:deck, user: @user) }
     
     context 'with valid params' do
       before :each do
         @decks_before_request = Deck.count
         @old_title = deck.reload.title
         @deck_params = FactoryBot.attributes_for(:deck)
+        
+        request.headers['X-Session-Token'] = @session.token
         patch :update, params: { id: deck.id, deck: @deck_params }
       end
       
@@ -332,13 +342,11 @@ RSpec.describe Api::V1::DecksController, type: :controller do
       
       it 'is expected to update fields for Deck' do
         deck.reload
-        @deck_params.each do |key, value|
-          expect(deck[key]).not_to eq(@old_title)
-          expect(deck[key]).to eq(value)
-        end
+        expect(@deck_params[:title]).not_to eq(@old_title)
+        expect(@deck_params[:title]).to eq(deck[:title])
       end
       
-      it 'is expected to NOT created a new deck' do
+      it 'is expected to NOT created a new Deck' do
         expect(Deck.count).to eq(@decks_before_request)
       end
       
@@ -355,8 +363,9 @@ RSpec.describe Api::V1::DecksController, type: :controller do
       end
     end
     
-    context 'deck not found' do
+    context 'NOT found' do
       before :each do
+        request.headers['X-Session-Token'] = @session.token
         patch :update, params: { id: -1 }
       end
       
@@ -376,11 +385,13 @@ RSpec.describe Api::V1::DecksController, type: :controller do
   end
   
   describe 'DELETE #destroy' do
-    let!(:deck){ FactoryBot.create(:deck) }
+    let!(:deck) { FactoryBot.create(:deck, user: @user) }
     
     context 'with valid params' do
       before :each do
-        @deck_before_request = Deck.count
+        @decks_before_request = Deck.count
+        
+        request.headers['X-Session-Token'] = @session.token
         delete :destroy, params: { id: deck.id }
       end
       
@@ -392,25 +403,24 @@ RSpec.describe Api::V1::DecksController, type: :controller do
         expect(response.content_type).to eq('application/json; charset=utf-8')
       end
       
-      it 'is expected to delete a deck' do
-        expect(Deck.count).to eq(@deck_before_request - 1)
-      end
-      
-      it 'is expected to delete the requested record' do
-        expect { Deck.find(deck.id) }.to raise_error(ActiveRecord::RecordNotFound)
+      it 'is expected to delete a Deck' do
+        expect(Deck.count).to eq(@decks_before_request - 1)
       end
     end
     
-    context 'deck not found' do
+    context 'NOT found' do
       before :each do
-        delete :destroy, params: { id: -1 }
+        @decks_before_request = Deck.count
+        
+        request.headers['X-Session-Token'] = @session.token
+        delete :destroy, params: { id: - 1  }
       end
       
       it 'is expected to have :not_found (404) HTTP response code' do
         expect(response.status).to eq(404)
       end
       
-      it 'should\'t change the size of the note relation' do
+      it 'should NOT change the size of the note relation' do
           expect{ Deck.count }.to_not change{ @decks_before_request }
         end
       

@@ -54,14 +54,20 @@ RSpec.describe Api::V1::CardsController, type: :controller do
     end
   end
   
+  before :all do
+    @user = FactoryBot.create(:user)
+    @session = FactoryBot.create(:session, user: @user)
+  end
+  
   describe 'GET #index' do
     context 'with valid params' do
       before :all do
         Card.destroy_all
-        @card = FactoryBot.create_list(:card, 5)
+        @card = FactoryBot.create_list(:card, 5, user: @user)
       end
       
       before :each do
+        request.headers['X-Session-Token'] = @session.token
         get :index
       end
       
@@ -105,10 +111,11 @@ RSpec.describe Api::V1::CardsController, type: :controller do
     context 'with valid params' do
       before :all do
         Card.destroy_all
-        @card = FactoryBot.create(:card)
+        @card = FactoryBot.create(:card, user: @user)
       end
       
       before :each do
+        request.headers['X-Session-Token'] = @session.token
         get :show, params: { id: @card['id'] }
       end
       
@@ -146,8 +153,9 @@ RSpec.describe Api::V1::CardsController, type: :controller do
       end
     end
     
-    context 'not found' do
+    context 'NOT found' do
       before :each do
+        request.headers['X-Session-Token'] = @session.token
         get :show, params: { id: -1 }
       end
       
@@ -171,6 +179,8 @@ RSpec.describe Api::V1::CardsController, type: :controller do
       before :each do
         @cards_before_request = Card.count
         @card_params = FactoryBot.attributes_for(:card)
+        
+        request.headers['X-Session-Token'] = @session.token
         post :create, params: { card: @card_params }
       end
       
@@ -210,16 +220,18 @@ RSpec.describe Api::V1::CardsController, type: :controller do
   end
   
   describe 'PATCH #update' do
-    let!(:card) { FactoryBot.create(:card) }
+    let!(:card) { FactoryBot.create(:card, user: @user) }
     
     context 'with valid params' do
       before :each do
         @cards_before_request = Card.count
         @old_params = { word: card.word, translation: card.translation, example: card.example }
         @new_params = FactoryBot.attributes_for(:card)
+        
+        request.headers['X-Session-Token'] = @session.token
         patch :update, params: { id: card.id, card: @new_params }
       end
-  
+      
       it 'is expected to have :ok (200) HTTP response code' do
         expect(response.status).to eq(200)
       end
@@ -236,7 +248,7 @@ RSpec.describe Api::V1::CardsController, type: :controller do
         end
       end
       
-      it "is expected to NOT create a new card" do
+      it 'is expected to NOT create a new card' do
         expect(Card.count).to eq(@cards_before_request)
       end
       
@@ -255,8 +267,9 @@ RSpec.describe Api::V1::CardsController, type: :controller do
       end
     end
     
-    context 'card not found' do
+    context 'NOT found' do
       before :each do
+        request.headers['X-Session-Token'] = @session.token
         patch :update, params: { id: -1 }
       end
       
@@ -276,16 +289,18 @@ RSpec.describe Api::V1::CardsController, type: :controller do
   end
   
   describe 'PUT #update' do
-    let!(:card) { FactoryBot.create(:card) }
+    let!(:card) { FactoryBot.create(:card, user: @user) }
     
     context 'with valid params' do
       before :each do
         @cards_before_request = Card.count
         @old_params = { word: card.word, translation: card.translation, example: card.example }
         @new_params = FactoryBot.attributes_for(:card)
+        
+        request.headers['X-Session-Token'] = @session.token
         patch :update, params: { id: card.id, card: @new_params }
       end
-  
+      
       it 'is expected to have :ok (200) HTTP response code' do
         expect(response.status).to eq(200)
       end
@@ -302,7 +317,7 @@ RSpec.describe Api::V1::CardsController, type: :controller do
         end
       end
       
-      it "is expected to NOT create a new card" do
+      it 'is expected to NOT create a new card' do
         expect(Card.count).to eq(@cards_before_request)
       end
       
@@ -321,8 +336,9 @@ RSpec.describe Api::V1::CardsController, type: :controller do
       end
     end
     
-    context 'card not found' do
+    context 'NOT found' do
       before :each do
+        request.headers['X-Session-Token'] = @session.token
         patch :update, params: { id: -1 }
       end
       
@@ -342,11 +358,13 @@ RSpec.describe Api::V1::CardsController, type: :controller do
   end
   
   describe 'DELETE #destroy' do
-    let!(:card) { FactoryBot.create(:card) }
+    let!(:card) { FactoryBot.create(:card, user: @user) }
     
     context 'with valid params' do
       before :each do
         @cards_before_request = Card.count
+        
+        request.headers['X-Session-Token'] = @session.token
         delete :destroy, params: { id: card.id }
       end
       
@@ -367,8 +385,11 @@ RSpec.describe Api::V1::CardsController, type: :controller do
       end
     end
     
-    context 'card not found' do
+    context 'NOT found' do
       before :each do
+        @cards_before_request = Card.count
+        
+        request.headers['X-Session-Token'] = @session.token
         delete :destroy, params: { id: -1 }
       end
       
@@ -376,7 +397,7 @@ RSpec.describe Api::V1::CardsController, type: :controller do
         expect(response.status).to eq(404)
       end
       
-      it 'should\'t change the size of the note relation' do
+      it 'should NOT change the size of the note relation' do
           expect{ Card.count }.to_not change{ @cards_before_request }
         end
       
