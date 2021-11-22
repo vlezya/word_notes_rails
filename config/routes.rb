@@ -13,6 +13,3 @@ Rails.application.routes.draw do
     end
   end
 end
-
-# post 'cards/:id', to: 'decks#add_card'
-# delete 'cards/:id', to: 'decks#remove_card'

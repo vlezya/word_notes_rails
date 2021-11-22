@@ -3,6 +3,7 @@ class Api::V1::CardsController < ApplicationController
   
   # GET /api/v1/cards
   def index
+    authorize Card
     cards = Card.all
     cards_json = ActiveModel::Serializer::CollectionSerializer.new(cards, each_serializer: CardSerializer)
     render json: { cards: cards_json }, status: :ok
@@ -10,6 +11,7 @@ class Api::V1::CardsController < ApplicationController
   
   # GET /api/v1/cards/:id
   def show
+    authorize @card
     card_json = CardSerializer.new(@card).as_json
     render json: { card: card_json }, status: :ok
   end
@@ -19,6 +21,7 @@ class Api::V1::CardsController < ApplicationController
     card = Card.new(card_params)
     card.user = current_user
     
+    authorize card
     if card.save
       card_json = CardSerializer.new(card).as_json
       render json: { card: card_json }, status: :created
@@ -29,6 +32,7 @@ class Api::V1::CardsController < ApplicationController
   
   # PATCH/PUT  /api/v1/cards/:id
   def update
+    authorize @card
     if @card.update(card_params)
       card_json = CardSerializer.new(@card).as_json
       render json: { card: card_json }, status: :ok
@@ -39,6 +43,7 @@ class Api::V1::CardsController < ApplicationController
   
   # DELETE /api/v1/cards/1
   def destroy
+    authorize @card
     card_json = CardSerializer.new(@card).as_json
     if @card.destroy
       render json: { card: card_json }, status: :ok
