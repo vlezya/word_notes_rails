@@ -15,7 +15,7 @@ class CardPolicy
   end
   
   def create?
-   user.present?
+   true
   end
   
   def update?

@@ -51,6 +51,8 @@ class Api::V1::DecksController < ApplicationController
   
   # POST /api/v1/decks/:id/add_card
   def add_card
+    authorize @deck
+    
     card = Card.find(params[:card_id])
     @deck.cards << card unless @deck.cards.include?(card)
     @deck.reload
@@ -59,6 +61,8 @@ class Api::V1::DecksController < ApplicationController
   end
   
   def remove_card
+    authorize @deck
+    
     card = Card.find(params[:card_id])
     @deck.cards.delete(card)
     @deck.reload
