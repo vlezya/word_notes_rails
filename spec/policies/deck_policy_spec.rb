@@ -6,8 +6,9 @@ describe DeckPolicy do
     @user2 = FactoryBot.create(:user)
     @card1 = FactoryBot.create(:card, user: @user1)
     @card2 = FactoryBot.create(:card, user: @user2)
-    @deck1 = FactoryBot.create(:deck, user: @user1)
+    @deck1 = FactoryBot.create(:deck, user: @user1, cards: [@card1])
     @deck2 = FactoryBot.create(:deck, user: @user2)
+    p @deck1
   end
   
   context 'User is owner' do
