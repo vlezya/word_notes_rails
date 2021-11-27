@@ -1,6 +1,6 @@
 class ApplicationController < ActionController::API
   include ErrorHandler
-  
+  include Pundit
   before_action :authenticate
   
   def current_user

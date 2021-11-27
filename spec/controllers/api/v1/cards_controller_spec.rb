@@ -114,9 +114,13 @@ RSpec.describe Api::V1::CardsController, type: :controller do
         @card = FactoryBot.create(:card, user: @user)
       end
       
-      before :each do
+      def call_show
         request.headers['X-Session-Token'] = @session.token
-        get :show, params: { id: @card['id'] }
+        get :show, params: { id: @card.id }
+      end
+      
+      before :each do
+        call_show
       end
       
       it 'is expected to have :ok (200) HTTP response code' do
@@ -125,6 +129,11 @@ RSpec.describe Api::V1::CardsController, type: :controller do
       
       it 'is expected to return application/json content type' do
         expect(response.content_type).to eq('application/json; charset=utf-8')
+      end
+      
+      it 'is expected to call authorize (Pundit)' do
+        expect(controller).to receive(:authorize).with(@card)
+        call_show
       end
       
       it 'is expected to return correct Card' do

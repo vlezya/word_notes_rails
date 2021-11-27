@@ -8,6 +8,7 @@ require 'rspec/rails'
 
 require 'factory_bot'
 require 'shoulda/matchers'
+require 'pundit/matchers'
 
 require 'simplecov'
 SimpleCov.start
