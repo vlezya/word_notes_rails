@@ -1,10 +1,9 @@
 class DeckPolicy
-  attr_reader :user, :deck, :card
+  attr_reader :user, :deck
   
-  def initialize(user, deck, card)
+  def initialize(user, deck)
     @user = user
     @deck = deck
-    @card = card
   end
   
   def index?
@@ -25,14 +24,13 @@ class DeckPolicy
   
   def destroy?
     deck.user == user
-    
   end
   
-  def add_card?
-    deck.user == user && card.user == user
+  def add?
+    deck.user == user
   end
   
-  def remove_card?
-    deck.user == user && card.user == user
+  def remove?
+    deck.user == user
   end
 end

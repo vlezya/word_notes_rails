@@ -94,6 +94,7 @@ RSpec.describe Api::V1::CardsController, type: :controller do
           expect(card.key?('word')).to eq(true)
           expect(card.key?('translation')).to eq(true)
           expect(card.key?('example')).to eq(true)
+          expect(card.key?('user_id')).to eq(true)
         end
       end
       
@@ -153,6 +154,7 @@ RSpec.describe Api::V1::CardsController, type: :controller do
         expect(card.key?('word')).to eq(true)
         expect(card.key?('translation')).to eq(true)
         expect(card.key?('example')).to eq(true)
+        expect(card.key?('user_id')).to eq(true)
       end
       
       it 'is expected to NOT include fields' do
@@ -218,6 +220,7 @@ RSpec.describe Api::V1::CardsController, type: :controller do
         expect(card.key?('word')).to eq(true)
         expect(card.key?('translation')).to eq(true)
         expect(card.key?('example')).to eq(true)
+        expect(card.key?('user_id')).to eq(true)
       end
       
       it 'is expected to NOT include fields' do
@@ -267,6 +270,7 @@ RSpec.describe Api::V1::CardsController, type: :controller do
         expect(card.key?('word')).to eq(true)
         expect(card.key?('translation')).to eq(true)
         expect(card.key?('example')).to eq(true)
+        expect(card.key?('user_id')).to eq(true)
       end
       
       it 'is expected to NOT include fields' do
@@ -336,6 +340,7 @@ RSpec.describe Api::V1::CardsController, type: :controller do
         expect(card.key?('word')).to eq(true)
         expect(card.key?('translation')).to eq(true)
         expect(card.key?('example')).to eq(true)
+        expect(card.key?('user_id')).to eq(true)
       end
       
       it 'is expected to NOT include fields' do

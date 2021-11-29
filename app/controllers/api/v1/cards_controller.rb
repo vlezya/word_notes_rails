@@ -4,7 +4,7 @@ class Api::V1::CardsController < ApplicationController
   # GET /api/v1/cards
   def index
     authorize Card
-    cards = Card.all
+    cards = current_user.cards.order(id: :desc)
     cards_json = ActiveModel::Serializer::CollectionSerializer.new(cards, each_serializer: CardSerializer)
     render json: { cards: cards_json }, status: :ok
   end

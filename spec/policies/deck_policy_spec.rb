@@ -7,12 +7,11 @@ describe DeckPolicy do
     @card1 = FactoryBot.create(:card, user: @user1)
     @card2 = FactoryBot.create(:card, user: @user2)
     @deck1 = FactoryBot.create(:deck, user: @user1, cards: [@card1])
-    @deck2 = FactoryBot.create(:deck, user: @user2)
-    p @deck1
+    @deck2 = FactoryBot.create(:deck, user: @user2, cards: [@card2])
   end
   
   context 'User is owner' do
-    subject { described_class.new(@user1, @deck1, @card1) }
+    subject { described_class.new(@user1, @deck1) }
     
     it { is_expected.to permit_action(:index) }
     it { is_expected.to permit_action(:show) }
@@ -24,7 +23,7 @@ describe DeckPolicy do
   end
   
   context 'User is NOT owner' do
-    subject { described_class.new(@user1, @deck2, @card2) }
+    subject { described_class.new(@user1, @deck2) }
     
     it { is_expected.to permit_action(:index) }
     it { is_expected.to forbid_action(:show) }

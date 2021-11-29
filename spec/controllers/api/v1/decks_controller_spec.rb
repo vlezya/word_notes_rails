@@ -51,23 +51,43 @@ RSpec.describe Api::V1::DecksController, type: :controller do
         format: 'json'
       )
     end
+    
+    it 'routes POST api/v1/decks/:deck_id/cards/:id/add to api/v1/decks#add' do
+      expect(post: 'api/v1/decks/1/cards/1/add').to route_to(
+        controller: 'api/v1/decks',
+        action: 'add',
+        deck_id: '1',
+        id: '1',
+        format: 'json'
+      )
+    end
+    
+    it 'routes DELETE api/v1/decks/:deck_id/cards/:id/remove to api/v1/decks#remove' do
+      expect(delete: 'api/v1/decks/1/cards/1/remove').to route_to(
+        controller: 'api/v1/decks',
+        action: 'remove',
+        deck_id: '1',
+        card_id: '1',
+        format: 'json'
+      )
+    end
   end
   
   before :all do
-    @user = FactoryBot.create(:user)
-    @session = FactoryBot.create(:session, user: @user)
+    @user1 = FactoryBot.create(:user)
+    @session = FactoryBot.create(:session, user: @user1)
   end
   
   describe 'GET #index' do
     context 'with valid params' do
       before :all do
         Deck.destroy_all
-        @card1 = FactoryBot.create(:card, user: @user)
-        @card2 = FactoryBot.create(:card, user: @user)
-        @card3 = FactoryBot.create(:card, user: @user)
-        @deck1 = FactoryBot.create(:deck, user: @user)
-        @deck2 = FactoryBot.create(:deck, cards: [@card1, @card2], user: @user)
-        @deck3 = FactoryBot.create(:deck, cards: [@card3], user: @user)
+        @card1 = FactoryBot.create(:card, user: @user1)
+        @card2 = FactoryBot.create(:card, user: @user1)
+        @card3 = FactoryBot.create(:card, user: @user1)
+        @deck1 = FactoryBot.create(:deck, user: @user1)
+        @deck2 = FactoryBot.create(:deck, cards: [@card1, @card2], user: @user1)
+        @deck3 = FactoryBot.create(:deck, cards: [@card3], user: @user1)
       end
       
       before :each do
@@ -140,13 +160,17 @@ RSpec.describe Api::V1::DecksController, type: :controller do
     context 'with valid params' do
       before :all do
         Deck.destroy_all
-        @cards = FactoryBot.create_list(:card, 3, user: @user)
-        @deck = FactoryBot.create(:deck, cards: @cards, user: @user)
+        @cards = FactoryBot.create_list(:card, 3, user: @user1)
+        @deck = FactoryBot.create(:deck, cards: @cards, user: @user1)
+      end
+      
+      def call_show
+        request.headers['X-Session-Token'] = @session.token
+        get :show, params: { id: @deck.id }
       end
       
       before :each do
-        request.headers['X-Session-Token'] = @session.token
-        get :show, params: { id: @deck.id }
+        call_show
       end
       
       it 'is expected to have :ok (200) HTTP response code' do
@@ -155,6 +179,11 @@ RSpec.describe Api::V1::DecksController, type: :controller do
       
       it 'is expected to return application/json content_type' do
         expect(response.content_type).to eq('application/json; charset=utf-8')
+      end
+      
+      it 'is expected to call authorize (Pundit)' do
+        expect(controller).to receive(:authorize).with(@deck)
+        call_show
       end
       
       it 'is expected to return correct Deck' do
@@ -255,7 +284,7 @@ RSpec.describe Api::V1::DecksController, type: :controller do
   end
   
   describe 'PATCH #update' do
-    let!(:deck) { FactoryBot.create(:deck, user: @user) }
+    let!(:deck) { FactoryBot.create(:deck, user: @user1) }
     
     context 'with valid params' do
       before :each do
@@ -320,7 +349,7 @@ RSpec.describe Api::V1::DecksController, type: :controller do
   end
   
   describe 'PUT #update' do
-    let!(:deck) { FactoryBot.create(:deck, user: @user) }
+    let!(:deck) { FactoryBot.create(:deck, user: @user1) }
     
     context 'with valid params' do
       before :each do
@@ -385,7 +414,7 @@ RSpec.describe Api::V1::DecksController, type: :controller do
   end
   
   describe 'DELETE #destroy' do
-    let!(:deck) { FactoryBot.create(:deck, user: @user) }
+    let!(:deck) { FactoryBot.create(:deck, user: @user1) }
     
     context 'with valid params' do
       before :each do
