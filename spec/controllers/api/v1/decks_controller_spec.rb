@@ -67,7 +67,7 @@ RSpec.describe Api::V1::DecksController, type: :controller do
         controller: 'api/v1/decks',
         action: 'remove',
         deck_id: '1',
-        card_id: '1',
+        id: '1',
         format: 'json'
       )
     end
@@ -247,11 +247,10 @@ RSpec.describe Api::V1::DecksController, type: :controller do
       before :each do
         @decks_before_request = Deck.count
         @deck_params = FactoryBot.attributes_for(:deck)
-        
         request.headers['X-Session-Token'] = @session.token
         post :create, params: { deck: @deck_params }
       end
-      
+
       it 'is expected to have :created (201) HTTP response code' do
         expect(response.status).to eq(201)
       end
