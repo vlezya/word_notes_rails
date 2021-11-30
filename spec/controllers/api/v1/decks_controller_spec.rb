@@ -74,25 +74,29 @@ RSpec.describe Api::V1::DecksController, type: :controller do
   end
   
   before :all do
-    @user1 = FactoryBot.create(:user)
-    @session = FactoryBot.create(:session, user: @user1)
+    @user = FactoryBot.create(:user)
+    @session = FactoryBot.create(:session, user: @user)
   end
   
   describe 'GET #index' do
     context 'with valid params' do
       before :all do
         Deck.destroy_all
-        @card1 = FactoryBot.create(:card, user: @user1)
-        @card2 = FactoryBot.create(:card, user: @user1)
-        @card3 = FactoryBot.create(:card, user: @user1)
-        @deck1 = FactoryBot.create(:deck, user: @user1)
-        @deck2 = FactoryBot.create(:deck, cards: [@card1, @card2], user: @user1)
-        @deck3 = FactoryBot.create(:deck, cards: [@card3], user: @user1)
+        @card1 = FactoryBot.create(:card, user: @user)
+        @card2 = FactoryBot.create(:card, user: @user)
+        @card3 = FactoryBot.create(:card, user: @user)
+        @deck1 = FactoryBot.create(:deck, user: @user)
+        @deck2 = FactoryBot.create(:deck, cards: [@card1, @card2], user: @user)
+        @deck3 = FactoryBot.create(:deck, cards: [@card3], user: @user)
       end
       
-      before :each do
+      def call_index
         request.headers['X-Session-Token'] = @session.token
         get :index
+      end
+
+      before :each do
+        call_index
       end
       
       it 'is expected to have :ok (200) HTTP response code' do
@@ -101,6 +105,11 @@ RSpec.describe Api::V1::DecksController, type: :controller do
       
       it 'is expected to return application/json content_type' do
         expect(response.content_type).to eq('application/json; charset=utf-8')
+      end
+      
+      it 'is expected to call authorize (Pundit)' do
+        expect(controller).to receive(:authorize)
+        call_index
       end
       
       it 'is expected to have a proper amount of Decks' do
@@ -160,8 +169,8 @@ RSpec.describe Api::V1::DecksController, type: :controller do
     context 'with valid params' do
       before :all do
         Deck.destroy_all
-        @cards = FactoryBot.create_list(:card, 3, user: @user1)
-        @deck = FactoryBot.create(:deck, cards: @cards, user: @user1)
+        @cards = FactoryBot.create_list(:card, 3, user: @user)
+        @deck = FactoryBot.create(:deck, cards: @cards, user: @user)
       end
       
       def call_show
@@ -247,16 +256,25 @@ RSpec.describe Api::V1::DecksController, type: :controller do
       before :each do
         @decks_before_request = Deck.count
         @deck_params = FactoryBot.attributes_for(:deck)
+        call_create
+      end
+      
+      def call_create
         request.headers['X-Session-Token'] = @session.token
         post :create, params: { deck: @deck_params }
       end
-
+      
       it 'is expected to have :created (201) HTTP response code' do
         expect(response.status).to eq(201)
       end
       
       it 'is expected to return application/json content_type' do
         expect(response.content_type).to eq('application/json; charset=utf-8')
+      end
+      
+      it 'is expected to call authorize (Pundit)' do
+        expect(controller).to receive(:authorize)
+        call_create
       end
       
       it 'is expected to created a new Deck' do
@@ -283,14 +301,17 @@ RSpec.describe Api::V1::DecksController, type: :controller do
   end
   
   describe 'PATCH #update' do
-    let!(:deck) { FactoryBot.create(:deck, user: @user1) }
+    let!(:deck) { FactoryBot.create(:deck, user: @user) }
     
     context 'with valid params' do
       before :each do
         @decks_before_request = Deck.count
         @old_title = deck.reload.title
         @deck_params = FactoryBot.attributes_for(:deck)
-        
+        call_update
+      end
+      
+      def call_update
         request.headers['X-Session-Token'] = @session.token
         patch :update, params: { id: deck.id, deck: @deck_params }
       end
@@ -301,6 +322,11 @@ RSpec.describe Api::V1::DecksController, type: :controller do
       
       it 'is expected to return application/json content_type' do
         expect(response.content_type).to eq('application/json; charset=utf-8')
+      end
+      
+      it 'is expected to call authorize (Pundit)' do
+        expect(controller).to receive(:authorize).with(deck)
+        call_update
       end
       
       it 'is expected to update fields for Deck' do
@@ -348,16 +374,19 @@ RSpec.describe Api::V1::DecksController, type: :controller do
   end
   
   describe 'PUT #update' do
-    let!(:deck) { FactoryBot.create(:deck, user: @user1) }
+    let!(:deck) { FactoryBot.create(:deck, user: @user) }
     
     context 'with valid params' do
       before :each do
         @decks_before_request = Deck.count
         @old_title = deck.reload.title
         @deck_params = FactoryBot.attributes_for(:deck)
-        
+        call_update
+      end
+      
+      def call_update
         request.headers['X-Session-Token'] = @session.token
-        patch :update, params: { id: deck.id, deck: @deck_params }
+        put :update, params: { id: deck.id, deck: @deck_params }
       end
       
       it 'is expected to have :ok (200) HTTP response code' do
@@ -366,6 +395,11 @@ RSpec.describe Api::V1::DecksController, type: :controller do
       
       it 'is expected to return application/json content_type' do
         expect(response.content_type).to eq('application/json; charset=utf-8')
+      end
+      
+      it 'is expected to call authorize (Pundit)' do
+        expect(controller).to receive(:authorize).with(deck)
+        call_update
       end
       
       it 'is expected to update fields for Deck' do
@@ -413,16 +447,15 @@ RSpec.describe Api::V1::DecksController, type: :controller do
   end
   
   describe 'DELETE #destroy' do
-    let!(:deck) { FactoryBot.create(:deck, user: @user1) }
+    let!(:deck) { FactoryBot.create(:deck, user: @user) }
     
     context 'with valid params' do
       before :each do
         @decks_before_request = Deck.count
-        
         request.headers['X-Session-Token'] = @session.token
         delete :destroy, params: { id: deck.id }
       end
-      
+
       it 'is expected to have :ok (200) HTTP response code' do
         expect(response.status).to eq(200)
       end
