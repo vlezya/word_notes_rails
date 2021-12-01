@@ -66,9 +66,13 @@ RSpec.describe Api::V1::CardsController, type: :controller do
         @card = FactoryBot.create_list(:card, 5, user: @user)
       end
       
-      before :each do
+      def call_index
         request.headers['X-Session-Token'] = @session.token
         get :index
+      end
+      
+      before :each do
+        call_index
       end
       
       it 'is expected to have :ok (200) HTTP response code' do
@@ -77,6 +81,11 @@ RSpec.describe Api::V1::CardsController, type: :controller do
       
       it 'is expected to return application/json content type' do
         expect(response.content_type).to eq('application/json; charset=utf-8')
+      end
+      
+      it 'is expected to call authorize (Pundit)' do
+        expect(controller).to receive(:authorize).with(Card)
+        call_index
       end
       
       it 'is expected to have proper amount of Cards' do
@@ -94,7 +103,6 @@ RSpec.describe Api::V1::CardsController, type: :controller do
           expect(card.key?('word')).to eq(true)
           expect(card.key?('translation')).to eq(true)
           expect(card.key?('example')).to eq(true)
-          expect(card.key?('user_id')).to eq(true)
         end
       end
       
@@ -154,7 +162,6 @@ RSpec.describe Api::V1::CardsController, type: :controller do
         expect(card.key?('word')).to eq(true)
         expect(card.key?('translation')).to eq(true)
         expect(card.key?('example')).to eq(true)
-        expect(card.key?('user_id')).to eq(true)
       end
       
       it 'is expected to NOT include fields' do
@@ -187,12 +194,15 @@ RSpec.describe Api::V1::CardsController, type: :controller do
   
   describe 'POST #create' do
     context 'with valid params' do
-      before :each do
+      def call_create
         @cards_before_request = Card.count
         @card_params = FactoryBot.attributes_for(:card)
-        
         request.headers['X-Session-Token'] = @session.token
         post :create, params: { card: @card_params }
+      end
+      
+      before :each do
+        call_create
       end
       
       it 'is expected to have :created (201) HTTP response code' do
@@ -201,6 +211,11 @@ RSpec.describe Api::V1::CardsController, type: :controller do
       
       it 'is expected to return application/json content type' do
         expect(response.content_type).to eq('application/json; charset=utf-8')
+      end
+      
+      it 'is expected to call authorize (Pundit)' do
+        expect(controller).to receive(:authorize).with(Card)
+        call_create
       end
       
       it 'is expected to crete a new Card' do
@@ -220,7 +235,6 @@ RSpec.describe Api::V1::CardsController, type: :controller do
         expect(card.key?('word')).to eq(true)
         expect(card.key?('translation')).to eq(true)
         expect(card.key?('example')).to eq(true)
-        expect(card.key?('user_id')).to eq(true)
       end
       
       it 'is expected to NOT include fields' do
@@ -232,16 +246,19 @@ RSpec.describe Api::V1::CardsController, type: :controller do
   end
   
   describe 'PATCH #update' do
-    let!(:card) { FactoryBot.create(:card, user: @user) }
-    
     context 'with valid params' do
-      before :each do
+      let!(:card) { FactoryBot.create(:card, user: @user) }
+      
+      def call_update
         @cards_before_request = Card.count
         @old_params = { word: card.word, translation: card.translation, example: card.example }
         @new_params = FactoryBot.attributes_for(:card)
-        
         request.headers['X-Session-Token'] = @session.token
         patch :update, params: { id: card.id, card: @new_params }
+      end
+      
+      before :each do
+        call_update
       end
       
       it 'is expected to have :ok (200) HTTP response code' do
@@ -250,6 +267,11 @@ RSpec.describe Api::V1::CardsController, type: :controller do
       
       it 'is expected to return application/json content type' do
         expect(response.content_type).to eq('application/json; charset=utf-8')
+      end
+      
+      it 'is expected to call authorize (Pundit)' do
+        expect(controller).to receive(:authorize).with(card)
+        call_update
       end
       
       it 'is expected to update fields for Card' do
@@ -270,7 +292,6 @@ RSpec.describe Api::V1::CardsController, type: :controller do
         expect(card.key?('word')).to eq(true)
         expect(card.key?('translation')).to eq(true)
         expect(card.key?('example')).to eq(true)
-        expect(card.key?('user_id')).to eq(true)
       end
       
       it 'is expected to NOT include fields' do
@@ -302,16 +323,19 @@ RSpec.describe Api::V1::CardsController, type: :controller do
   end
   
   describe 'PUT #update' do
-    let!(:card) { FactoryBot.create(:card, user: @user) }
-    
     context 'with valid params' do
-      before :each do
+      let!(:card) { FactoryBot.create(:card, user: @user) }
+      
+      def call_update
         @cards_before_request = Card.count
         @old_params = { word: card.word, translation: card.translation, example: card.example }
         @new_params = FactoryBot.attributes_for(:card)
-        
         request.headers['X-Session-Token'] = @session.token
-        patch :update, params: { id: card.id, card: @new_params }
+        put :update, params: { id: card.id, card: @new_params }
+      end
+      
+      before :each do
+        call_update
       end
       
       it 'is expected to have :ok (200) HTTP response code' do
@@ -320,6 +344,11 @@ RSpec.describe Api::V1::CardsController, type: :controller do
       
       it 'is expected to return application/json content type' do
         expect(response.content_type).to eq('application/json; charset=utf-8')
+      end
+      
+      it 'is expected to call authorize (Pundit)' do
+        expect(controller).to receive(:authorize).with(card)
+        call_update
       end
       
       it 'is expected to update fields for Card' do
@@ -340,7 +369,6 @@ RSpec.describe Api::V1::CardsController, type: :controller do
         expect(card.key?('word')).to eq(true)
         expect(card.key?('translation')).to eq(true)
         expect(card.key?('example')).to eq(true)
-        expect(card.key?('user_id')).to eq(true)
       end
       
       it 'is expected to NOT include fields' do
@@ -372,14 +400,16 @@ RSpec.describe Api::V1::CardsController, type: :controller do
   end
   
   describe 'DELETE #destroy' do
-    let!(:card) { FactoryBot.create(:card, user: @user) }
-    
     context 'with valid params' do
-      before :each do
+      def call_destroy
+        @card = FactoryBot.create(:card, user: @user) unless @card&.persisted?
         @cards_before_request = Card.count
-        
         request.headers['X-Session-Token'] = @session.token
-        delete :destroy, params: { id: card.id }
+        delete :destroy, params: { id: @card.id }
+      end
+      
+      before :each do
+        call_destroy
       end
       
       it 'is expected to have :ok (200) HTTP response code' do
@@ -390,12 +420,18 @@ RSpec.describe Api::V1::CardsController, type: :controller do
         expect(response.content_type).to eq('application/json; charset=utf-8')
       end
       
+      it 'is expected to call authorize (Pundit)' do
+        @card = FactoryBot.create(:card, user: @user)
+        expect(controller).to receive(:authorize).with(@card)
+        call_destroy
+      end
+      
       it 'is expected to delete a Card' do
         expect(Card.count).to eq(@cards_before_request - 1)
       end
       
       it 'is expected to delete the requested record' do
-        expect { Card.find(card.id) }.to raise_error(ActiveRecord::RecordNotFound)
+        expect { Card.find(@card.id) }.to raise_error(ActiveRecord::RecordNotFound)
       end
     end
     

@@ -11,6 +11,7 @@ class Api::V1::DecksController < ApplicationController
   
   # GET /api/v1/decks/:id
   def show
+    authorize @deck
     deck_json = DeckSerializer.new(@deck).as_json
     render json: { deck: deck_json }, status: :ok
   end
@@ -18,8 +19,8 @@ class Api::V1::DecksController < ApplicationController
   # POST /api/v1/decks
   def create
     deck = Deck.new(deck_params)
-    deck.user = current_user
     authorize deck
+    deck.user = current_user
     if deck.save
       deck_json = DeckSerializer.new(deck).as_json
       render json: { deck: deck_json }, status: :created
@@ -30,6 +31,7 @@ class Api::V1::DecksController < ApplicationController
   
   # PATCH/PUT  /api/v1/decks/:id
   def update
+    authorize @deck
     if @deck.update(deck_params)
       deck_json = DeckSerializer.new(@deck).as_json
       render json: { deck: deck_json }, status: :ok
@@ -40,6 +42,7 @@ class Api::V1::DecksController < ApplicationController
   
   # DELETE /api/v1/decks/1
   def destroy
+    authorize @deck
     deck_json = DeckSerializer.new(@deck).as_json
     @deck.destroy
     render json: { deck: deck_json }, status: :ok
@@ -74,6 +77,6 @@ class Api::V1::DecksController < ApplicationController
     end
     
     def deck_params
-      params.require(:deck).permit(:title, card_ids: [])
+      params.require(:deck).permit(:title)
     end
 end
