@@ -77,6 +77,6 @@ class Api::V1::DecksController < ApplicationController
     end
     
     def deck_params
-      params.require(:deck).permit(:title, card_ids: [])
+      params.require(:deck).permit(:title)
     end
 end
