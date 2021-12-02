@@ -108,7 +108,7 @@ RSpec.describe Api::V1::DecksController, type: :controller do
       end
       
       it 'is expected to call authorize (Pundit)' do
-        expect(controller).to receive(:authorize)
+        expect(controller).to receive(:authorize).with(Deck)
         call_index
       end
       
@@ -256,6 +256,7 @@ RSpec.describe Api::V1::DecksController, type: :controller do
       def call_create
         @decks_before_request = Deck.count
         @deck_params = FactoryBot.attributes_for(:deck)
+        
         request.headers['X-Session-Token'] = @session.token
         post :create, params: { deck: @deck_params }
       end
@@ -273,7 +274,7 @@ RSpec.describe Api::V1::DecksController, type: :controller do
       end
       
       it 'is expected to call authorize (Pundit)' do
-        expect(controller).to receive(:authorize).with(Deck)
+        expect(controller).to receive(:authorize)
         call_create
       end
       
@@ -308,6 +309,7 @@ RSpec.describe Api::V1::DecksController, type: :controller do
         @decks_before_request = Deck.count
         @old_title = deck.reload.title
         @deck_params = FactoryBot.attributes_for(:deck)
+        
         request.headers['X-Session-Token'] = @session.token
         patch :update, params: { id: deck.id, deck: @deck_params }
       end
@@ -381,6 +383,7 @@ RSpec.describe Api::V1::DecksController, type: :controller do
         @decks_before_request = Deck.count
         @old_title = deck.reload.title
         @deck_params = FactoryBot.attributes_for(:deck)
+        
         request.headers['X-Session-Token'] = @session.token
         put :update, params: { id: deck.id, deck: @deck_params }
       end
@@ -451,6 +454,7 @@ RSpec.describe Api::V1::DecksController, type: :controller do
       def call_destroy
         @deck = FactoryBot.create(:deck, user: @user) unless @deck&.persisted?
         @decks_before_request = Deck.count
+        
         request.headers['X-Session-Token'] = @session.token
         delete :destroy, params: { id: @deck.id }
       end
@@ -506,12 +510,15 @@ RSpec.describe Api::V1::DecksController, type: :controller do
   end
   
   describe 'POST #add' do
+    let!(:deck) { FactoryBot.create(:deck, user: @user) }
+    
     context 'with valid params' do
       def call_add_card
-        @deck = FactoryBot.create(:deck, user: @user) unless @deck&.persisted?
         @card = FactoryBot.create(:card, user: @user)
+        @card_count_before_request = deck.cards.count
+        
         request.headers['X-Session-Token'] = @session.token
-        post :add, params: { deck_id: @deck.id, id: @card.id }
+        post :add, params: { deck_id: deck.id, id: @card.id }
       end
       
       before :each do
@@ -527,8 +534,12 @@ RSpec.describe Api::V1::DecksController, type: :controller do
       end
       
       it 'is expected to call authorize (Pundit)' do
-        expect(controller).to receive(:authorize).with(@deck)
+        expect(controller).to receive(:authorize).with(deck)
         call_add_card
+      end
+      
+      it 'is expected to add a new Card for Deck' do
+        expect(deck.cards.count).to eq(@card_count_before_request + 1)
       end
       
       it 'is expected to include fields' do
@@ -556,7 +567,7 @@ RSpec.describe Api::V1::DecksController, type: :controller do
       
       it 'is expected to set fields for Deck and Card' do
         deck = Deck.order(id: :desc).first
-        expect(deck[:title]).to eq(@deck[:title])
+        expect(deck[:title]).to eq(deck[:title])
         deck.cards.each do |card|
           expect(card[:word]).to eq(@card[:word])
           expect(card[:translation]).to eq(@card[:translation])
@@ -564,13 +575,39 @@ RSpec.describe Api::V1::DecksController, type: :controller do
         end
       end
     end
+    
+    context 'NOT found' do
+      before :each do
+        request.headers['X-Session-Token'] = @session.token
+        post :add, params: { deck_id: deck.id , id: -1  }
+      end
+      
+      it 'is expected to have :not_found (404) HTTP response code' do
+        expect(response.status).to eq(404)
+      end
+      
+      it 'is expected to return application/json content type' do
+        expect(response.content_type).to eq('application/json; charset=utf-8')
+      end
+      
+      it 'is expected to return errors' do
+        json_response = JSON.parse(response.body)
+        expect(json_response.key?('errors')).to eq(true)
+      end
+    end
   end
   
   describe 'DELETE #remove' do
     context 'with valid params' do
-      def call_remove_card
-        @deck = FactoryBot.create(:deck, user: @user) unless @deck&.persisted?
+      before :all do
         @card = FactoryBot.create(:card, user: @user)
+        @deck = FactoryBot.create(:deck, user: @user)
+      end
+      
+      def call_remove_card
+        @deck.cards << @card
+        @cards_count_before_request = @deck.cards.count
+        
         request.headers['X-Session-Token'] = @session.token
         delete :remove, params: { deck_id: @deck.id, id: @card.id }
       end
@@ -591,23 +628,36 @@ RSpec.describe Api::V1::DecksController, type: :controller do
         expect(controller).to receive(:authorize).with(@deck)
         call_remove_card
       end
+      
+      it 'is expected to remove a Card for Deck' do
+        expect(@deck.cards.count).to eq(@cards_count_before_request - 1)
+      end
+      
+      it 'is expected to include fields' do
+        deck = JSON.parse(response.body)['deck']
+        expect(deck.key?('id')).to eq(true)
+        expect(deck.key?('title')).to eq(true)
+        expect(deck.key?('cards')).to eq(true)
+      end
+      
+      it 'is expected to NOT include fields' do
+        deck = JSON.parse(response.body)['deck']
+        expect(deck.key?('created_at')).to eq(false)
+        expect(deck.key?('updated_at')).to eq(false)
+      end
     end
     
     context 'NOT found' do
       before :each do
-        card = FactoryBot.create(:card, user: @user)
-        @decks_before_request = Deck.count
+        @deck = FactoryBot.create(:deck, user: @user)
+        
         request.headers['X-Session-Token'] = @session.token
-        delete :remove, params: { deck_id: -1 , id: card.id  }
+        delete :remove, params: { deck_id: @deck.id, id: -1  }
       end
       
       it 'is expected to have :not_found (404) HTTP response code' do
         expect(response.status).to eq(404)
       end
-      
-      it 'should NOT change the size of the note relation' do
-          expect{ Deck.count }.to_not change{ @decks_before_request }
-        end
       
       it 'is expected to return application/json content type' do
         expect(response.content_type).to eq('application/json; charset=utf-8')

@@ -197,6 +197,7 @@ RSpec.describe Api::V1::CardsController, type: :controller do
       def call_create
         @cards_before_request = Card.count
         @card_params = FactoryBot.attributes_for(:card)
+        
         request.headers['X-Session-Token'] = @session.token
         post :create, params: { card: @card_params }
       end
@@ -214,7 +215,7 @@ RSpec.describe Api::V1::CardsController, type: :controller do
       end
       
       it 'is expected to call authorize (Pundit)' do
-        expect(controller).to receive(:authorize).with(Card)
+        expect(controller).to receive(:authorize)
         call_create
       end
       
@@ -253,6 +254,7 @@ RSpec.describe Api::V1::CardsController, type: :controller do
         @cards_before_request = Card.count
         @old_params = { word: card.word, translation: card.translation, example: card.example }
         @new_params = FactoryBot.attributes_for(:card)
+        
         request.headers['X-Session-Token'] = @session.token
         patch :update, params: { id: card.id, card: @new_params }
       end
@@ -330,6 +332,7 @@ RSpec.describe Api::V1::CardsController, type: :controller do
         @cards_before_request = Card.count
         @old_params = { word: card.word, translation: card.translation, example: card.example }
         @new_params = FactoryBot.attributes_for(:card)
+        
         request.headers['X-Session-Token'] = @session.token
         put :update, params: { id: card.id, card: @new_params }
       end
@@ -404,6 +407,7 @@ RSpec.describe Api::V1::CardsController, type: :controller do
       def call_destroy
         @card = FactoryBot.create(:card, user: @user) unless @card&.persisted?
         @cards_before_request = Card.count
+        
         request.headers['X-Session-Token'] = @session.token
         delete :destroy, params: { id: @card.id }
       end
