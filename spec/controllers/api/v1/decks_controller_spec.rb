@@ -94,7 +94,7 @@ RSpec.describe Api::V1::DecksController, type: :controller do
         request.headers['X-Session-Token'] = @session.token
         get :index
       end
-
+      
       before :each do
         call_index
       end
@@ -378,7 +378,7 @@ RSpec.describe Api::V1::DecksController, type: :controller do
   describe 'PUT #update' do
     context 'with valid params' do
       let!(:deck) { FactoryBot.create(:deck, user: @user) }
-
+      
       def call_update
         @decks_before_request = Deck.count
         @old_title = deck.reload.title
