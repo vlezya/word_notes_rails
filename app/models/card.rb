@@ -1,7 +1,8 @@
 class Card < ApplicationRecord
   # Associations
-  has_and_belongs_to_many :decks
   belongs_to :user
+  has_many :card_decks, dependent: :destroy
+  has_many :decks, through: :card_decks
   
   # Field validations
   validates :word, presence: true
