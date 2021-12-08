@@ -6,6 +6,7 @@ RSpec.describe CardDeck, type: :model do
     deck = FactoryBot.create(:deck, user: user)
     card = FactoryBot.create(:card, user: user)
     card_deck = FactoryBot.build(:card_deck, card_id: card.id, deck_id: deck.id)
+    
     expect(card_deck.valid?).to eq(true)
   end
   
@@ -18,7 +19,6 @@ RSpec.describe CardDeck, type: :model do
     context 'associations' do
     end
     context 'fields' do
-
     end
   end
   
