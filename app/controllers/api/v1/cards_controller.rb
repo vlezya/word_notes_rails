@@ -22,7 +22,7 @@ class Api::V1::CardsController < ApplicationController
   def create
     card = Card.new(card_params)
     card.user = current_user
-    
+  
     authorize card
     
     if card.save

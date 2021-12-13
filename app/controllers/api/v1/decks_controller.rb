@@ -45,39 +45,12 @@ class Api::V1::DecksController < ApplicationController
     end
   end
   
-  # DELETE /api/v1/decks/1
+  # DELETE /api/v1/decks/:id
   def destroy
     authorize @deck
     
     deck_json = DeckSerializer.new(@deck).as_json
     @deck.destroy
-    render json: { deck: deck_json }, status: :ok
-  end
-  
-  # POST /api/v1/decks/:deck_id/cards/:id/add
-  def add
-    deck = Deck.find(params[:deck_id])
-    deck.user = current_user
-    card = Card.find(params[:id])
-    
-    authorize deck
-    
-    deck.cards << card unless deck.cards.include?(card)
-    deck.reload
-    deck_json = DeckSerializer.new(deck).as_json
-    render json: { deck: deck_json }, status: :ok
-  end
-  
-  # DELETE /api/v1/decks/:deck_id/cards/:id/remove
-  def remove
-    deck = Deck.find(params[:deck_id])
-    card = Card.find(params[:id])
-    
-    authorize deck
-    
-    deck.cards.delete(card)
-    deck.reload
-    deck_json = DeckSerializer.new(deck).as_json
     render json: { deck: deck_json }, status: :ok
   end
   
