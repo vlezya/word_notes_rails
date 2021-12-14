@@ -5,7 +5,7 @@ RSpec.describe CardDeck, type: :model do
     user = FactoryBot.create(:user)
     deck = FactoryBot.create(:deck, user: user)
     card = FactoryBot.create(:card, user: user)
-    card_deck = FactoryBot.build(:card_deck, card_id: card.id, deck_id: deck.id)
+    card_deck = FactoryBot.build(:card_deck, card: card, deck: deck)
     
     expect(card_deck.valid?).to eq(true)
   end
@@ -17,8 +17,10 @@ RSpec.describe CardDeck, type: :model do
   
   context 'validations' do
     context 'associations' do
+      
     end
     context 'fields' do
+      it { is_expected.to validate_uniqueness_of(:deck_id).scoped_to(:card_id)}
     end
   end
   
