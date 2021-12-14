@@ -2,14 +2,14 @@ Rails.application.routes.draw do
   namespace :api, defaults: { format: 'json' } do
     namespace :v1 do
       resources :cards
-      resources :decks, except: [:add_card, :remove_card]
-      
-      resources :decks, only: [:add_card, :remove_card] do
+      resources :card_decks, only: [:index]
+      resources :decks do
         resources :cards, except: [:create, :destroy, :show, :index, :update] do
-          member do
-            post :add, controller: :decks
-            delete :remove, controller: :decks
-          end
+          resources :card_decks, only: [:create, :destroy]
+            member do
+              post :create, controller: :card_decks
+              delete :destroy, controller: :card_decks
+            end
         end
       end
       

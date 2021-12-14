@@ -8,7 +8,8 @@ RSpec.describe Card, type: :model do
   end
   
   context 'associations' do
-    it { is_expected.to have_and_belong_to_many(:decks) }
+    it { is_expected.to have_many(:card_decks) }
+    it { is_expected.to have_many(:decks).through(:card_decks) }
     it { is_expected.to belong_to(:user).required }
   end
   

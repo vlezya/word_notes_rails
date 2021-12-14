@@ -10,10 +10,18 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2021_11_20_131740) do
+ActiveRecord::Schema.define(version: 2021_12_03_143257) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
+
+  create_table "card_decks", force: :cascade do |t|
+    t.bigint "card_id", null: false
+    t.bigint "deck_id", null: false
+    t.datetime "created_at", precision: 6, null: false
+    t.datetime "updated_at", precision: 6, null: false
+    t.index ["card_id", "deck_id"], name: "index_card_decks_on_card_id_and_deck_id", unique: true
+  end
 
   create_table "cards", force: :cascade do |t|
     t.string "word", null: false
@@ -23,14 +31,6 @@ ActiveRecord::Schema.define(version: 2021_11_20_131740) do
     t.datetime "updated_at", precision: 6, null: false
     t.bigint "user_id", null: false
     t.index ["user_id"], name: "index_cards_on_user_id"
-  end
-
-  create_table "cards_decks", id: false, force: :cascade do |t|
-    t.bigint "card_id", null: false
-    t.bigint "deck_id", null: false
-    t.datetime "created_at", precision: 6, null: false
-    t.datetime "updated_at", precision: 6, null: false
-    t.index ["card_id", "deck_id"], name: "index_cards_decks_on_card_id_and_deck_id", unique: true
   end
 
   create_table "decks", force: :cascade do |t|
