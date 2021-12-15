@@ -25,12 +25,4 @@ class DeckPolicy
   def destroy?
     deck.user == user
   end
-  
-  def add?
-    deck.user == user
-  end
-  
-  def remove?
-    deck.user == user
-  end
 end

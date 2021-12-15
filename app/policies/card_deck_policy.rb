@@ -11,10 +11,10 @@ class CardDeckPolicy
   end
   
   def create?
-    true
+   true
   end
   
   def destroy?
-    card_deck.user == user
+   true
   end
 end

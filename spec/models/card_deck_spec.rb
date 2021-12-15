@@ -20,6 +20,8 @@ RSpec.describe CardDeck, type: :model do
       
     end
     context 'fields' do
+      it { is_expected.to validate_presence_of(:deck_id) }
+      it { is_expected.to validate_presence_of(:card_id) }
       it { is_expected.to validate_uniqueness_of(:deck_id).scoped_to(:card_id)}
     end
   end

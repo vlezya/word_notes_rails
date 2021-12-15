@@ -18,8 +18,6 @@ describe DeckPolicy do
     it { is_expected.to permit_action(:create) }
     it { is_expected.to permit_action(:update) }
     it { is_expected.to permit_action(:destroy) }
-    it { is_expected.to permit_action(:add) }
-    it { is_expected.to permit_action(:remove) }
   end
   
   context 'User is NOT owner' do
