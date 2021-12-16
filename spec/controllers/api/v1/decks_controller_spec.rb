@@ -51,26 +51,6 @@ RSpec.describe Api::V1::DecksController, type: :controller do
         format: 'json'
       )
     end
-    
-    it 'routes POST api/v1/decks/:deck_id/cards/:id/add to api/v1/decks#add' do
-      expect(post: 'api/v1/decks/1/cards/1/add').to route_to(
-        controller: 'api/v1/decks',
-        action: 'add',
-        deck_id: '1',
-        id: '1',
-        format: 'json'
-      )
-    end
-    
-    it 'routes DELETE api/v1/decks/:deck_id/cards/:id/remove to api/v1/decks#remove' do
-      expect(delete: 'api/v1/decks/1/cards/1/remove').to route_to(
-        controller: 'api/v1/decks',
-        action: 'remove',
-        deck_id: '1',
-        id: '1',
-        format: 'json'
-      )
-    end
   end
   
   before :all do
@@ -84,10 +64,11 @@ RSpec.describe Api::V1::DecksController, type: :controller do
         Deck.destroy_all
         @card1 = FactoryBot.create(:card, user: @user)
         @card2 = FactoryBot.create(:card, user: @user)
-        @card3 = FactoryBot.create(:card, user: @user)
         @deck1 = FactoryBot.create(:deck, user: @user)
-        @deck2 = FactoryBot.create(:deck, cards: [@card1, @card2], user: @user)
-        @deck3 = FactoryBot.create(:deck, cards: [@card3], user: @user)
+        @deck2 = FactoryBot.create(:deck, user: @user)
+        FactoryBot.create(:card_deck, card: @card1, deck: @deck1 )
+        FactoryBot.create(:card_deck, card: @card2, deck: @deck1 )
+        FactoryBot.create(:card_deck, card: @card2, deck: @deck2 )
       end
       
       def call_index
@@ -117,7 +98,7 @@ RSpec.describe Api::V1::DecksController, type: :controller do
         expect(json_response.key?('decks')).to eq(true)
         
         deck = json_response['decks']
-        expect(deck.count).to eq(3)
+        expect(deck.count).to eq(2)
       end
       
       it 'is expected to includes fields Deck' do
@@ -152,15 +133,11 @@ RSpec.describe Api::V1::DecksController, type: :controller do
         
         json_deck1 = decks.find { |deck| deck['id'] == @deck1.id }
         expect(json_deck1).not_to eq(nil)
-        expect(json_deck1['cards'].count).to eq(0)
+        expect(json_deck1['cards'].count).to eq(2)
         
         json_deck2 = decks.find { |deck| deck['id'] == @deck2.id }
         expect(json_deck2).not_to eq(nil)
-        expect(json_deck2['cards'].count).to eq(2)
-        
-        json_deck3 = decks.find { |deck| deck['id'] == @deck3.id }
-        expect(json_deck3).not_to eq(nil)
-        expect(json_deck3['cards'].count).to eq(1)
+        expect(json_deck2['cards'].count).to eq(1)
       end
     end
   end
@@ -169,8 +146,11 @@ RSpec.describe Api::V1::DecksController, type: :controller do
     context 'with valid params' do
       before :all do
         Deck.destroy_all
-        @cards = FactoryBot.create_list(:card, 3, user: @user)
-        @deck = FactoryBot.create(:deck, cards: @cards, user: @user)
+        @card1 = FactoryBot.create(:card, user: @user)
+        @card2 = FactoryBot.create(:card, user: @user)
+        @deck = FactoryBot.create(:deck, user: @user)
+        @card_deck1 = FactoryBot.create(:card_deck, card: @card1, deck: @deck)
+        @card_deck2 = FactoryBot.create(:card_deck, card: @card2, deck: @deck)
       end
       
       def call_show
@@ -203,7 +183,7 @@ RSpec.describe Api::V1::DecksController, type: :controller do
         deck_id = deck['id']
         expect(deck_id).to eq(@deck.id)
         expect(deck).not_to eq(nil)
-        expect(deck['cards'].count).to eq(3)
+        expect(deck['cards'].count).to eq(2)
       end
       
       it 'is expected to include fields' do
@@ -497,167 +477,6 @@ RSpec.describe Api::V1::DecksController, type: :controller do
       it 'should NOT change the size of the note relation' do
           expect{ Deck.count }.to_not change{ @decks_before_request }
         end
-      
-      it 'is expected to return application/json content type' do
-        expect(response.content_type).to eq('application/json; charset=utf-8')
-      end
-      
-      it 'is expected to return errors' do
-        json_response = JSON.parse(response.body)
-        expect(json_response.key?('errors')).to eq(true)
-      end
-    end
-  end
-  
-  describe 'POST #add' do
-    let!(:deck) { FactoryBot.create(:deck, user: @user) }
-    
-    context 'with valid params' do
-      def call_add_card
-        @card = FactoryBot.create(:card, user: @user)
-        @card_count_before_request = deck.cards.count
-        
-        request.headers['X-Session-Token'] = @session.token
-        post :add, params: { deck_id: deck.id, id: @card.id }
-      end
-      
-      before :each do
-        call_add_card
-      end
-      
-      it 'is expected to have :ok (200) HTTP response code' do
-        expect(response.status).to eq(200)
-      end
-      
-      it 'is expected to return application/json content_type' do
-        expect(response.content_type).to eq('application/json; charset=utf-8')
-      end
-      
-      it 'is expected to call authorize (Pundit)' do
-        expect(controller).to receive(:authorize).with(deck)
-        call_add_card
-      end
-      
-      it 'is expected to add a new Card for Deck' do
-        expect(deck.cards.count).to eq(@card_count_before_request + 1)
-      end
-      
-      it 'is expected to include fields' do
-        deck = JSON.parse(response.body)['deck']
-        expect(deck.key?('id')).to eq(true)
-        expect(deck.key?('title')).to eq(true)
-        expect(deck.key?('cards')).to eq(true)
-        deck['cards'].each do |card|
-          expect(card.key?('id')).to eq(true)
-          expect(card.key?('word')).to eq(true)
-          expect(card.key?('translation')).to eq(true)
-          expect(card.key?('example')).to eq(true)
-        end
-      end
-      
-      it 'is expected to NOT include fields' do
-        deck = JSON.parse(response.body)['deck']
-        expect(deck.key?('created_at')).to eq(false)
-        expect(deck.key?('updated_at')).to eq(false)
-        deck['cards'].each do |card|
-          expect(deck.key?('created_at')).to eq(false)
-          expect(deck.key?('updated_at')).to eq(false)
-        end
-      end
-      
-      it 'is expected to set fields for Deck and Card' do
-        deck = Deck.order(id: :desc).first
-        expect(deck[:title]).to eq(deck[:title])
-        deck.cards.each do |card|
-          expect(card[:word]).to eq(@card[:word])
-          expect(card[:translation]).to eq(@card[:translation])
-          expect(card[:example]).to eq(@card[:example])
-        end
-      end
-    end
-    
-    context 'NOT found' do
-      before :each do
-        request.headers['X-Session-Token'] = @session.token
-        post :add, params: { deck_id: deck.id , id: -1  }
-      end
-      
-      it 'is expected to have :not_found (404) HTTP response code' do
-        expect(response.status).to eq(404)
-      end
-      
-      it 'is expected to return application/json content type' do
-        expect(response.content_type).to eq('application/json; charset=utf-8')
-      end
-      
-      it 'is expected to return errors' do
-        json_response = JSON.parse(response.body)
-        expect(json_response.key?('errors')).to eq(true)
-      end
-    end
-  end
-  
-  describe 'DELETE #remove' do
-    context 'with valid params' do
-      before :all do
-        @card = FactoryBot.create(:card, user: @user)
-        @deck = FactoryBot.create(:deck, user: @user)
-      end
-      
-      def call_remove_card
-        @deck.cards << @card
-        @cards_count_before_request = @deck.cards.count
-        
-        request.headers['X-Session-Token'] = @session.token
-        delete :remove, params: { deck_id: @deck.id, id: @card.id }
-      end
-      
-      before :each do
-        call_remove_card
-      end
-      
-      it 'is expected to have :ok (200) HTTP response code' do
-        expect(response.status).to eq(200)
-      end
-      
-      it 'is expected to return application/json content_type' do
-        expect(response.content_type).to eq('application/json; charset=utf-8')
-      end
-      
-      it 'is expected to call authorize (Pundit)' do
-        expect(controller).to receive(:authorize).with(@deck)
-        call_remove_card
-      end
-      
-      it 'is expected to remove a Card for Deck' do
-        expect(@deck.cards.count).to eq(@cards_count_before_request - 1)
-      end
-      
-      it 'is expected to include fields' do
-        deck = JSON.parse(response.body)['deck']
-        expect(deck.key?('id')).to eq(true)
-        expect(deck.key?('title')).to eq(true)
-        expect(deck.key?('cards')).to eq(true)
-      end
-      
-      it 'is expected to NOT include fields' do
-        deck = JSON.parse(response.body)['deck']
-        expect(deck.key?('created_at')).to eq(false)
-        expect(deck.key?('updated_at')).to eq(false)
-      end
-    end
-    
-    context 'NOT found' do
-      before :each do
-        @deck = FactoryBot.create(:deck, user: @user)
-        
-        request.headers['X-Session-Token'] = @session.token
-        delete :remove, params: { deck_id: @deck.id, id: -1  }
-      end
-      
-      it 'is expected to have :not_found (404) HTTP response code' do
-        expect(response.status).to eq(404)
-      end
       
       it 'is expected to return application/json content type' do
         expect(response.content_type).to eq('application/json; charset=utf-8')
