@@ -9,14 +9,12 @@ class ApplicationController < ActionController::API
   
   private
     def authenticate
-      # Check Session token presence
       token = request.headers['X-Session-Token']
       if token.nil?
         render json: { errors: ['No access token in header'] }, status: :unauthorized
         return
       end
       
-      # Check if Device with this token exists
       current_session = Session.find_by(token: token)
       if current_session.nil?
         render json: { errors: ['Invalid Session'] }, status: :unauthorized
