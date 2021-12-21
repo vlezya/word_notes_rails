@@ -1,4 +1,4 @@
-class Api::V1::UsersController < ApplicationController
+class Api::V1::UsersController < ApiController
   skip_before_action :authenticate
   
   # POST /api/v1/users
