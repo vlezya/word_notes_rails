@@ -1,4 +1,4 @@
-class Api::V1::DecksController < ApplicationController
+class Api::V1::DecksController < ApiController
   before_action :set_deck, only: [:show, :update, :destroy]
   
   # GET /api/v1/decks

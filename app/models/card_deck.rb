@@ -4,7 +4,7 @@ class CardDeck < ApplicationRecord
   belongs_to :deck
   
   # Validations
-  validates_presence_of :deck_id
-  validates_presence_of :card_id
+  validates :deck_id, presence: true
+  validates :card_id, presence: true
   validates_uniqueness_of :deck_id, scope: :card_id
 end
