@@ -1,5 +1,5 @@
 class Api::V1::CardsController < ApiController
-  before_action :set_card, only: [:show, :update, :destroy]
+  before_action :set_card, only: [:show, :update, :destroy, :decks]
   
   # GET /api/v1/cards
   def index
@@ -55,6 +55,16 @@ class Api::V1::CardsController < ApiController
     else
       render json: { errors: @card.errors }, status: :unprocessable_entity
     end
+  end
+  
+  # PUT /api/v1/cards/:id/decks
+  def decks
+    authorize @card
+    
+    deck_ids = params[:deck_ids]
+    existing_card_decks = CardDeck.where(card: @card)
+    render json: { }, status: :ok
+    
   end
   
   private
