@@ -505,6 +505,48 @@ RSpec.describe Api::V1::CardsController, type: :controller do
         expect(controller).to receive(:authorize)
         call_decks
       end
+      
+      it 'is expected to retain existing CardDeck for Deck in :deck_ids' do
+        expect(CardDeck.exists?(card: @card, deck: @deck1)).to eq(true)
+      end
+      
+      it 'is expected to destroy CardDeck for Deck NOT in :deck_ids' do
+        expect(CardDeck.exists?(card: @card, deck: @deck2)).to eq(false)
+      end
+      
+      it 'is expected to create new CardDeck for Deck in :deck_ids' do
+        expect(CardDeck.exists?(card: @card, deck: @deck3)).to eq(true)
+      end
+      
+      it 'is expected to include fields to created CardDeck and deleted CardDeck' do
+        create_card_decks = JSON.parse(response.body)['created_card_decks']
+        create_card_decks.each do |create_card_deck|
+          expect(create_card_deck.key?('id')).to eq(true)
+          expect(create_card_deck.key?('card_id')).to eq(true)
+          expect(create_card_deck.key?('deck_id')).to eq(true)
+        end
+        
+        delete_card_decks = JSON.parse(response.body)['deleted_card_decks']
+        delete_card_decks.each do |delete_card_deck|
+          expect(delete_card_deck.key?('id')).to eq(true)
+          expect(delete_card_deck.key?('card_id')).to eq(true)
+          expect(delete_card_deck.key?('deck_id')).to eq(true)
+        end
+      end
+      
+      it 'is expected to NOT include fields to created CardDeck and deleted CardDeck' do
+        create_card_decks = JSON.parse(response.body)['created_card_decks']
+        create_card_decks.each do |create_card_deck|
+          expect(create_card_deck.key?('created_at')).to eq(false)
+          expect(create_card_deck.key?('updated_at')).to eq(false)
+        end
+        
+        delete_card_decks = JSON.parse(response.body)['deleted_card_decks']
+        delete_card_decks.each do |delete_card_deck|
+          expect(delete_card_deck.key?('created_at')).to eq(false)
+          expect(delete_card_deck.key?('updated_at')).to eq(false)
+        end
+      end
     end
   end
 end

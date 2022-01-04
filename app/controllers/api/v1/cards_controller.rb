@@ -61,10 +61,21 @@ class Api::V1::CardsController < ApiController
   def decks
     authorize @card
     
-    deck_ids = params[:deck_ids]
-    existing_card_decks = CardDeck.where(card: @card)
-    render json: { }, status: :ok
+    deck_ids = params[:deck_ids].map(&:to_i)
+    created_card_deck_ids = []
+    deck_ids.each do |deck_id|
+      unless CardDeck.exists?(card: @card, deck_id: deck_id)
+        created_card_deck_ids << CardDeck.create(card: @card, deck_id: deck_id).id
+      end
+    end
     
+    existing_deck_ids = CardDeck.where(card: @card).pluck(:deck_id)
+    deck_ids_to_delete = existing_deck_ids - deck_ids
+    deleted_card_decks = CardDeck.where(card: @card, deck_id: deck_ids_to_delete).destroy_all
+    created_card_decks = CardDeck.where(id: created_card_deck_ids)
+    created_card_decks_json = ActiveModel::Serializer::CollectionSerializer.new(created_card_decks, each_serializer: CardDeckSerializer)
+    deleted_card_decks_json = ActiveModel::Serializer::CollectionSerializer.new(deleted_card_decks, each_serializer: CardDeckSerializer)
+    render json: { created_card_decks: created_card_decks_json, deleted_card_decks: deleted_card_decks_json }, status: :ok
   end
   
   private
