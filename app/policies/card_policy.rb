@@ -25,4 +25,8 @@ class CardPolicy
   def destroy?
     card.user == user
   end
+  
+  def decks?
+    card.user == user
+  end
 end

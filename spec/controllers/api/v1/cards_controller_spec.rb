@@ -44,11 +44,20 @@ RSpec.describe Api::V1::CardsController, type: :controller do
       )
     end
     
-    it ' routes DELETE api/v1/cards/:id to api/v1/cards#destroy' do
+    it 'routes DELETE api/v1/cards/:id to api/v1/cards#destroy' do
       expect(delete: 'api/v1/cards/55').to route_to(
         controller: 'api/v1/cards',
         action: 'destroy',
         id: '55',
+        format: 'json'
+      )
+    end
+    
+    it 'routes PUT api/v1/cards/:id/decks to api/v1/cards#decks' do
+      expect(put: 'api/v1/cards/CARD_ID/decks').to route_to(
+        controller: 'api/v1/cards',
+        action: 'decks',
+        id: 'CARD_ID',
         format: 'json'
       )
     end
@@ -451,17 +460,92 @@ RSpec.describe Api::V1::CardsController, type: :controller do
         expect(response.status).to eq(404)
       end
       
-      it 'should NOT change the size of the note relation' do
-          expect{ Card.count }.to_not change{ @cards_before_request }
-        end
-      
       it 'is expected to return application/json content type' do
         expect(response.content_type).to eq('application/json; charset=utf-8')
+      end
+      
+      it 'should NOT change the size of the note relation' do
+        expect{ Card.count }.to_not change{ @cards_before_request }
       end
       
       it 'is expected to return errors' do
         json_response = JSON.parse(response.body)
         expect(json_response.key?('errors')).to eq(true)
+      end
+    end
+  end
+  
+  describe 'PUT #decks' do
+    context 'with valid params' do
+      def call_decks
+        @card = FactoryBot.create(:card, user: @user)
+        @deck1 = FactoryBot.create(:deck, user: @user)
+        @deck2 = FactoryBot.create(:deck, user: @user)
+        @deck3 = FactoryBot.create(:deck, user: @user)
+        @card_deck1 = FactoryBot.create(:card_deck, card: @card, deck: @deck1)
+        @card_deck2 = FactoryBot.create(:card_deck, card: @card, deck: @deck2)
+        
+        request.headers['X-Session-Token'] = @session.token
+        put :decks, params: { id: @card.id, deck_ids: [@deck1.id, @deck3.id] }
+      end
+      
+      before :each do
+        call_decks
+      end
+      
+      it 'is expected to have :ok (200) HTTP response code' do
+        expect(response.status).to eq(200)
+      end
+      
+      it 'is expected to return application/json content type' do
+        expect(response.content_type).to eq('application/json; charset=utf-8')
+      end
+      
+      it 'is expected to call authorize (Pundit)' do
+        expect(controller).to receive(:authorize)
+        call_decks
+      end
+      
+      it 'is expected to retain existing CardDeck for Deck in :deck_ids' do
+        expect(CardDeck.exists?(card: @card, deck: @deck1)).to eq(true)
+      end
+      
+      it 'is expected to destroy CardDeck for Deck NOT in :deck_ids' do
+        expect(CardDeck.exists?(card: @card, deck: @deck2)).to eq(false)
+      end
+      
+      it 'is expected to create new CardDeck for Deck in :deck_ids' do
+        expect(CardDeck.exists?(card: @card, deck: @deck3)).to eq(true)
+      end
+      
+      it 'is expected to include fields to created CardDeck and deleted CardDeck' do
+        create_card_decks = JSON.parse(response.body)['created_card_decks']
+        create_card_decks.each do |create_card_deck|
+          expect(create_card_deck.key?('id')).to eq(true)
+          expect(create_card_deck.key?('card_id')).to eq(true)
+          expect(create_card_deck.key?('deck_id')).to eq(true)
+        end
+        
+        delete_card_decks = JSON.parse(response.body)['deleted_card_decks']
+        delete_card_decks.each do |delete_card_deck|
+          expect(delete_card_deck.key?('id')).to eq(true)
+          expect(delete_card_deck.key?('card_id')).to eq(true)
+          expect(delete_card_deck.key?('deck_id')).to eq(true)
+        end
+      end
+      
+      it 'is expected to NOT include fields to created CardDeck and deleted CardDeck' do
+        create_card_decks = JSON.parse(response.body)['created_card_decks']
+        create_card_decks.each do |create_card_deck|
+          expect(create_card_deck.key?('created_at')).to eq(false)
+          expect(create_card_deck.key?('updated_at')).to eq(false)
+        end
+        
+        delete_card_decks = JSON.parse(response.body)['deleted_card_decks']
+        delete_card_decks.each do |delete_card_deck|
+          expect(delete_card_deck.key?('created_at')).to eq(false)
+          expect(delete_card_deck.key?('updated_at')).to eq(false)
+        end
       end
     end
   end
