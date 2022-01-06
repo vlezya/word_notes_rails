@@ -8,8 +8,14 @@ Rails.application.routes.draw do
           put :decks, controller: :cards
         end
       end
+      
       resources :card_decks, only: [:index, :create, :destroy]
-      resources :decks
+      resources :decks do
+        member do
+          delete :cards, controller: :decks
+        end
+      end
+      
       resources :sessions, only: [:create, :destroy], param: :token
       resources :users, only: [:create]
     end

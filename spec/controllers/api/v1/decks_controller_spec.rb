@@ -51,6 +51,15 @@ RSpec.describe Api::V1::DecksController, type: :controller do
         format: 'json'
       )
     end
+    
+    it 'routes DELETE api/v1/decks/:id/cards to api/v1/decks#cards' do
+      expect(delete: 'api/v1/decks/DECK_ID/cards').to route_to(
+        controller: 'api/v1/decks',
+        action: 'cards',
+        id: 'DECK_ID',
+        format: 'json'
+      )
+    end
   end
   
   before :all do
@@ -486,6 +495,80 @@ RSpec.describe Api::V1::DecksController, type: :controller do
         json_response = JSON.parse(response.body)
         expect(json_response.key?('errors')).to eq(true)
       end
+    end
+  end
+  
+  describe 'DELETE #cards' do
+    context 'with valid params' do
+      def call_cards
+        @card1 = FactoryBot.create(:card, user: @user)
+        @card2 = FactoryBot.create(:card, user: @user)
+        @deck = FactoryBot.create(:deck, user: @user) unless @deck&.persisted?
+        @card_deck1 = FactoryBot.create(:card_deck, card: @card1, deck: @deck)
+        @card_deck2 = FactoryBot.create(:card_deck, card: @card2, deck: @deck)
+        @decks_before_request = Deck.count
+        @cards_before_request = Card.count
+        
+        request.headers['X-Session-Token'] = @session.token
+        delete :cards, params: { id: @deck.id }
+      end
+      
+      before :each do
+        call_cards
+      end
+      
+      it 'is expected to have :ok (200) HTTP response code' do
+        expect(response.status).to eq(200)
+      end
+      
+      it 'is expected to return application/json content_type' do
+        expect(response.content_type).to eq('application/json; charset=utf-8')
+      end
+        
+      it 'is expected to call authorize (Pundit)' do
+        @deck = FactoryBot.create(:deck, user: @user)
+        expect(controller).to receive(:authorize).with(@deck)
+        call_cards
+      end
+      
+      it 'is expected to delete Cards for Deck' do
+        expect(CardDeck.exists?(card: @card1, deck: @deck)).to eq(false)
+        expect(CardDeck.exists?(card: @card2, deck: @deck)).to eq(false)
+      end
+      
+      it 'is expected to delete a Card' do
+        expect(Card.count).to eq(@cards_before_request - 2)
+      end
+      
+      it 'is expected to delete a Deck' do
+        expect(Deck.count).to eq(@decks_before_request - 1)
+      end
+    end
+  end
+  
+  context 'NOT found' do
+    before :each do
+      @decks_before_request = Deck.count
+      
+      request.headers['X-Session-Token'] = @session.token
+      delete :cards, params: { id: - 1  }
+    end
+    
+    it 'is expected to have :not_found (404) HTTP response code' do
+      expect(response.status).to eq(404)
+    end
+    
+    it 'should NOT change the size of the note relation' do
+        expect{ Deck.count }.to_not change{ @decks_before_request }
+      end
+    
+    it 'is expected to return application/json content type' do
+      expect(response.content_type).to eq('application/json; charset=utf-8')
+    end
+    
+    it 'is expected to return errors' do
+      json_response = JSON.parse(response.body)
+      expect(json_response.key?('errors')).to eq(true)
     end
   end
 end
